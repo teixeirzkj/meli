@@ -7,9 +7,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   /*
-   * Tudo, menos os assets do Next e os estáticos servidos de /public.
+   * Tudo, menos os assets do Next, os estáticos de /public e o /api/health —
+   * que precisa responder justamente quando o middleware está com problema.
    * Só exclusão por prefixo: filtrar por extensão exigiria escapar o ponto,
    * e um "." solto aqui derruba rotas legítimas do matcher.
    */
-  matcher: ["/((?!_next|prototipos|favicon.ico|logo-rotas.png).*)"],
+  matcher: ["/((?!_next|api/health|prototipos|favicon.ico|logo-rotas.png).*)"],
 };

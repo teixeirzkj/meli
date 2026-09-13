@@ -9,6 +9,18 @@ export async function updateSession(request: NextRequest) {
   // renderiza a página avisa o que falta, em vez de derrubar o middleware.
   if (!envConfigurado()) return NextResponse.next({ request });
 
+  try {
+    return await verificarSessao(request);
+  } catch (erro) {
+    // Middleware que estoura vira MIDDLEWARE_INVOCATION_FAILED: a Vercel
+    // devolve 500 em todas as rotas e engole a causa. Melhor seguir adiante —
+    // o layout de (app) refaz a checagem de sessão no servidor e redireciona.
+    console.error("[middleware] falhou, seguindo sem checar sessão:", erro);
+    return NextResponse.next({ request });
+  }
+}
+
+async function verificarSessao(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
