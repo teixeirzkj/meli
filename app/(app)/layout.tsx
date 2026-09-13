@@ -4,10 +4,14 @@ import { BottomNav } from "@/components/BottomNav";
 import { Header } from "@/components/Header";
 import { formatData, diasRestantes } from "@/lib/format";
 import type { Profile } from "@/lib/types";
+import { EnvFaltando } from "@/components/EnvFaltando";
+import { envConfigurado } from "@/lib/supabase/env";
 
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  if (!envConfigurado()) return <EnvFaltando />;
+
   const supabase = await createClient();
   const {
     data: { user },
