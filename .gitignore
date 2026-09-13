@@ -1,7 +1,25 @@
-# Arquivos do sistema
+# Dependências
+/node_modules
+/.pnp
+.pnp.*
+
+# Next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Variáveis de ambiente (nunca comitar chaves)
+.env
+.env*.local
+
+# Deploy
+/.vercel
+
+# Sistema
 Thumbs.db
 desktop.ini
 .DS_Store
 
-# Pacote gerado (duplicata dos arquivos do repositório)
+# Pacote gerado
 *.zip

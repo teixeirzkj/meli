@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy: #12295c;
+  --color-navy-ink: #0f1b33;
+  --color-navy-soft: #1b3d86;
+  --color-yellow: #ffdd00;
+  --color-yellow-soft: #ffe94d;
+  --color-muted: #5c6980;
+  --color-line: #d9e0ea;
+  --color-line-soft: #e2e7ef;
+  --color-surface: #f5f7fa;
+  --color-surface-alt: #f7f9fc;
+  --color-danger: #b42318;
+  --color-danger-bg: #fef3f2;
+  --color-danger-line: #fecdca;
+  --color-success: #0b6b45;
+  --color-success-bg: #e6f6ee;
+  --color-warn: #8a5a00;
+  --color-warn-bg: #fff6c2;
+  --color-warn-line: #ffe27a;
+
+  --font-display: var(--font-space-grotesk), system-ui, sans-serif;
+  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+html,
+body {
+  background: var(--color-surface);
+  color: var(--color-navy-ink);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@utility card {
+  background: #fff;
+  border: 1px solid var(--color-line-soft);
+  border-radius: 14px;
+}
+
+@keyframes fb-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-fb-in {
+  animation: fb-in 0.18s ease-out;
+}
+
+.animate-pop-in {
+  animation: pop-in 0.14s ease-out;
+}
