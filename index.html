@@ -1,51 +1,1379 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rotas — MVP</title>
+<title>Rotas</title>
 <link rel="icon" href="./logo-rotas.png">
-<style>
-  :root { color-scheme: light; }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; min-height: 100vh; background: #F5F7FA; color: #0F1B33;
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    display: flex; align-items: center; justify-content: center;
-    padding: 32px 16px;
-  }
-  main { width: 100%; max-width: 440px; }
-  .logo { width: 72px; height: 72px; border-radius: 18px; object-fit: cover; display: block; margin-bottom: 20px; }
-  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -.02em; }
-  p.sub { margin: 0 0 28px; color: #5B6B85; font-size: 15px; }
-  a.card {
-    display: block; text-decoration: none; color: inherit; background: #fff;
-    border: 1px solid #E2E8F2; border-radius: 14px; padding: 18px 20px;
-    margin-bottom: 12px; transition: border-color .15s, transform .15s;
-  }
-  a.card:hover { border-color: #12295C; transform: translateY(-1px); }
-  a.card strong { display: block; font-size: 16px; margin-bottom: 4px; }
-  a.card span { font-size: 13.5px; color: #5B6B85; }
-  footer { margin-top: 24px; font-size: 12.5px; color: #94A0B4; }
-</style>
+<script src="./support.js"></script>
 </head>
 <body>
-<main>
-  <img class="logo" src="./logo-rotas.png" alt="">
-  <h1>Rotas</h1>
-  <p class="sub">MVP mobile-first — protótipos navegáveis</p>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #F5F7FA; }
+  * { -webkit-tap-highlight-color: transparent; }
+  a { color: #12295C; }
+  a:hover { color: #1B3D86; }
+  input::placeholder { color: #94A0B4; }
+  @keyframes fbIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  @keyframes popIn { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+<div style="min-height:100vh;background:#F5F7FA;color:#0F1B33;font-family:'IBM Plex Sans',system-ui,sans-serif;display:flex;flex-direction:column">
 
-  <a class="card" href="./Rotas%20App.dc.html">
-    <strong>Rotas App</strong>
-    <span>App do entregador: login, lista de rotas e execução de paradas</span>
-  </a>
+  <sc-if value="{{ offline }}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="position:sticky;top:0;z-index:30;background:#FFF6C2;border-bottom:1px solid #FFE27A;color:#6B4E00;font-size:13px;font-weight:600;padding:9px 16px;text-align:center">🟠 Sem conexão — dados salvos no dispositivo</div>
+  </sc-if>
 
-  <a class="card" href="./Conferencia%20de%20Rotas.dc.html">
-    <strong>Conferência de Rotas</strong>
-    <span>Painel de conferência — tema escuro</span>
-  </a>
+  <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:28px 18px">
+      <div style="width:100%;max-width:380px">
+        <div style="display:flex;justify-content:center;margin-bottom:22px">
+          <img src="logo-rotas.png" alt="Rotas" style="width:128px;height:128px;border-radius:22px;display:block" />
+        </div>
+        <h1 style="margin:0 0 6px;font:700 26px/1.2 'Space Grotesk',sans-serif;letter-spacing:-0.02em;color:#12295C;text-align:center">Entrar</h1>
+        <p style="margin:0 0 26px;color:#5C6980;font-size:14px;text-align:center">Conferência de rotas e pacotes</p>
 
-  <footer>Protótipo estático · sem backend</footer>
-</main>
+        <div style="background:#fff;border:1px solid #E2E7EF;border-radius:16px;padding:18px">
+          <label for="l-email" style="display:block;font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#5C6980;margin-bottom:8px">E-mail</label>
+          <input id="l-email" type="email" autocomplete="email" placeholder="voce@empresa.com" value="{{ email }}" onChange="{{ onEmail }}" onKeyDown="{{ onLoginKey }}" style="width:100%;box-sizing:border-box;height:52px;padding:0 14px;background:#F7F9FC;border:1px solid #D9E0EA;border-radius:10px;color:#0F1B33;font-size:16px;outline:none;margin-bottom:16px" style-focus="border-color:#12295C;background:#fff" />
+
+          <label for="l-pass" style="display:block;font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#5C6980;margin-bottom:8px">Senha</label>
+          <input id="l-pass" type="password" autocomplete="current-password" placeholder="••••••" value="{{ senha }}" onChange="{{ onSenha }}" onKeyDown="{{ onLoginKey }}" style="width:100%;box-sizing:border-box;height:52px;padding:0 14px;background:#F7F9FC;border:1px solid #D9E0EA;border-radius:10px;color:#0F1B33;font-size:16px;outline:none" style-focus="border-color:#12295C;background:#fff" />
+
+          <sc-if value="{{ loginErr }}" hint-placeholder-val="{{ false }}">
+            <div role="alert" style="margin-top:14px;padding:12px 14px;border-radius:10px;background:#FEF3F2;border:1px solid #FECDCA;color:#B42318;font-size:14px;line-height:1.5;animation:fbIn .18s ease">{{ loginErr }}</div>
+          </sc-if>
+
+          <button type="button" onClick="{{ onLogin }}" disabled="{{ loginBusy }}" style="width:100%;min-height:54px;margin-top:20px;background:#FFDD00;color:#12295C;border:none;border-radius:12px;font:700 16px/1 'Space Grotesk',sans-serif;cursor:pointer" style-hover="background:#FFE94D" style-active="transform:scale(0.99)">{{ loginBtn }}</button>
+        </div>
+
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ appHeader }}" hint-placeholder-val="{{ false }}">
+    <header style="position:sticky;top:0;z-index:25;background:#12295C;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px">
+      <img src="logo-rotas.png" alt="" style="width:34px;height:34px;border-radius:9px;display:block;flex:0 0 auto" />
+      <div style="flex:1;min-width:0">
+        <div style="font:700 15px/1.2 'Space Grotesk',sans-serif;letter-spacing:-0.01em">Rotas</div>
+        <div style="font-size:11.5px;color:#B9C6E4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ headerSub }}</div>
+      </div>
+      <sc-if value="{{ isAdminUser }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:0 0 auto;padding:5px 9px;border-radius:999px;background:#FFDD00;color:#12295C;font:700 11px/1.2 'IBM Plex Sans',sans-serif;letter-spacing:0.04em">ADMIN</div>
+      </sc-if>
+      <button type="button" onClick="{{ onLogout }}" aria-label="Sair" style="flex:0 0 auto;min-height:38px;padding:0 12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:10px;color:#fff;font:600 13px/1 'IBM Plex Sans',sans-serif;cursor:pointer" style-hover="background:rgba(255,255,255,.2)">Sair</button>
+    </header>
+  </sc-if>
+
+  <sc-if value="{{ isBlocked }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:28px 18px">
+      <div style="width:100%;max-width:420px;background:#fff;border:1px solid #FECDCA;border-radius:16px;padding:24px;text-align:center">
+        <div style="font:700 20px/1.3 'Space Grotesk',sans-serif;color:#B42318;margin-bottom:10px">{{ blockTitulo }}</div>
+        <div style="color:#5C6980;font-size:14px;line-height:1.7">{{ blockTexto }}</div>
+        <button type="button" onClick="{{ onLogout }}" style="width:100%;min-height:50px;margin-top:20px;background:#12295C;color:#fff;border:none;border-radius:12px;font:600 15px/1 'Space Grotesk',sans-serif;cursor:pointer">Voltar ao login</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;width:100%;max-width:860px;margin:0 auto;box-sizing:border-box;padding:20px 18px 110px">
+      <div style="margin-bottom:18px">
+        <div style="font:700 22px/1.25 'Space Grotesk',sans-serif;letter-spacing:-0.02em;color:#12295C">{{ saudacao }}</div>
+        <div style="color:#5C6980;font-size:14px;margin-top:4px">{{ hojeLongo }}</div>
+      </div>
+
+      <sc-if value="{{ avisoAssinatura }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:16px;padding:12px 14px;border-radius:12px;background:#FFF6C2;border:1px solid #FFE27A;color:#6B4E00;font-size:14px;font-weight:600">{{ avisoAssinatura }}</div>
+      </sc-if>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px">
+        <div style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:14px 16px">
+          <div style="color:#5C6980;font-size:11.5px;letter-spacing:0.07em;text-transform:uppercase;font-weight:600">Rotas de hoje</div>
+          <div style="font:700 30px/1.1 'Space Grotesk',sans-serif;margin-top:6px;color:#12295C">{{ sHoje }}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:14px 16px">
+          <div style="color:#5C6980;font-size:11.5px;letter-spacing:0.07em;text-transform:uppercase;font-weight:600">Pacotes esperados</div>
+          <div style="font:700 30px/1.1 'Space Grotesk',sans-serif;margin-top:6px;color:#12295C">{{ sEsp }}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:14px 16px">
+          <div style="color:#5C6980;font-size:11.5px;letter-spacing:0.07em;text-transform:uppercase;font-weight:600">Pacotes conferidos</div>
+          <div style="font:700 30px/1.1 'Space Grotesk',sans-serif;margin-top:6px;color:#0B6B45">{{ sConf }}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:14px 16px">
+          <div style="color:#5C6980;font-size:11.5px;letter-spacing:0.07em;text-transform:uppercase;font-weight:600">Pacotes faltantes</div>
+          <div style="font:700 30px/1.1 'Space Grotesk',sans-serif;margin-top:6px;color: {{ sFaltColor }}">{{ sFalt }}</div>
+        </div>
+      </div>
+
+      <button type="button" onClick="{{ onNovaRota }}" style="width:100%;min-height:56px;background:#FFDD00;color:#12295C;border:none;border-radius:12px;font:700 16px/1 'Space Grotesk',sans-serif;cursor:pointer;margin-bottom:24px" style-hover="background:#FFE94D" style-active="transform:scale(0.995)">+ Nova rota</button>
+
+      <sc-if value="{{ semRotas }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center;padding:38px 20px;background:#fff;border:1px dashed #C9D3E2;border-radius:16px">
+          <div style="font:600 17px/1.3 'Space Grotesk',sans-serif;margin-bottom:8px;color:#12295C">Nenhuma rota criada ainda.</div>
+          <div style="color:#5C6980;font-size:14px;margin-bottom:20px">Crie uma rota para começar a conferir os pacotes.</div>
+          <button type="button" onClick="{{ onNovaRota }}" style="min-height:48px;padding:0 20px;background:#12295C;color:#fff;border:none;border-radius:12px;font:600 15px/1 'Space Grotesk',sans-serif;cursor:pointer">Criar primeira rota</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ temRotas }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px">
+            <div style="font:700 15px/1 'Space Grotesk',sans-serif;color:#12295C">Rotas recentes</div>
+            <button type="button" onClick="{{ goHist }}" style="background:none;border:none;color:#12295C;font-size:14px;font-weight:600;cursor:pointer;padding:6px 0">Ver histórico</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
+            <sc-for list="{{ recentes }}" as="r" hint-placeholder-count="3">
+              <button type="button" onClick="{{ r.onOpen }}" style="display:block;width:100%;text-align:left;background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:16px;cursor:pointer;color:#0F1B33;font-family:inherit" style-hover="border-color:#12295C">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
+                  <div>
+                    <div style="font:700 18px/1.2 'Space Grotesk',sans-serif;color:#12295C">{{ r.nome }}</div>
+                    <div style="color:#5C6980;font-size:13px;margin-top:3px">{{ r.dataFmt }}</div>
+                  </div>
+                  <div style="flex:0 0 auto;padding:6px 10px;border-radius:999px;font:700 11.5px/1.2 'IBM Plex Sans',sans-serif;background: {{ r.badgeBg }};color: {{ r.badgeFg }};border:1px solid {{ r.badgeBd }}">{{ r.badge }}</div>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:#5C6980">
+                  <span><span style="color:#0F1B33;font-weight:700">{{ r.esperados }}</span> esperados</span>
+                  <span><span style="color:#0F1B33;font-weight:700">{{ r.conferidos }}</span> conferidos</span>
+                  <span>{{ r.resultado }}</span>
+                </div>
+                <div style="margin-top:12px;height:6px;border-radius:99px;background:#EDF1F6;overflow:hidden">
+                  <div style="height:100%;border-radius:99px;background: {{ r.barColor }};width: {{ r.barW }}"></div>
+                </div>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isNew }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;width:100%;max-width:520px;margin:0 auto;box-sizing:border-box;padding:16px 18px 110px">
+      <button type="button" onClick="{{ goDash }}" style="background:none;border:none;color:#5C6980;font-size:15px;font-weight:600;cursor:pointer;padding:8px 0;margin-bottom:6px">← Voltar</button>
+      <h1 style="margin:0 0 20px;font:700 24px/1.2 'Space Grotesk',sans-serif;letter-spacing:-0.02em;color:#12295C">Nova rota</h1>
+      <div style="background:#fff;border:1px solid #E2E7EF;border-radius:16px;padding:18px">
+        <label for="f-nome" style="display:block;font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#5C6980;margin-bottom:8px">Nome da rota</label>
+        <input id="f-nome" type="text" placeholder="K-19" value="{{ fNome }}" onChange="{{ onFNome }}" style="width:100%;box-sizing:border-box;height:52px;padding:0 14px;background:#F7F9FC;border:1px solid #D9E0EA;border-radius:10px;color:#0F1B33;font-size:16px;outline:none" style-focus="border-color:#12295C;background:#fff" />
+        <sc-if value="{{ eNome }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:8px;color:#B42318;font-size:13px">{{ eNome }}</div>
+        </sc-if>
+
+        <div style="height:18px"></div>
+        <label for="f-qtd" style="display:block;font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#5C6980;margin-bottom:8px">Quantidade esperada</label>
+        <input id="f-qtd" type="text" inputMode="numeric" placeholder="90" value="{{ fQtd }}" onChange="{{ onFQtd }}" style="width:100%;box-sizing:border-box;height:52px;padding:0 14px;background:#F7F9FC;border:1px solid #D9E0EA;border-radius:10px;color:#0F1B33;font-size:16px;font-family:'IBM Plex Mono',monospace;outline:none" style-focus="border-color:#12295C;background:#fff" />
+        <sc-if value="{{ eQtd }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:8px;color:#B42318;font-size:13px">{{ eQtd }}</div>
+        </sc-if>
+
+        <div style="height:18px"></div>
+        <label for="f-data" style="display:block;font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#5C6980;margin-bottom:8px">Data da rota</label>
+        <input id="f-data" type="date" value="{{ fData }}" onChange="{{ onFData }}" style="width:100%;box-sizing:border-box;height:52px;padding:0 14px;background:#F7F9FC;border:1px solid #D9E0EA;border-radius:10px;color:#0F1B33;font-size:16px;outline:none" style-focus="border-color:#12295C;background:#fff" />
+        <sc-if value="{{ eData }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:8px;color:#B42318;font-size:13px">{{ eData }}</div>
+        </sc-if>
+
+        <button type="button" onClick="{{ onCriar }}" disabled="{{ criando }}" style="width:100%;min-height:54px;margin-top:24px;background:#FFDD00;color:#12295C;border:none;border-radius:12px;font:700 16px/1 'Space Grotesk',sans-serif;cursor:pointer" style-hover="background:#FFE94D">{{ criarBtn }}</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isConf }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;width:100%;max-width:760px;margin:0 auto;box-sizing:border-box;padding:12px 18px 40px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <button type="button" onClick="{{ onSair }}" style="background:none;border:none;color:#5C6980;font-size:15px;font-weight:600;cursor:pointer;padding:8px 0">← Rotas</button>
+        <div style="padding:6px 10px;border-radius:999px;font:700 11.5px/1.2 'IBM Plex Sans',sans-serif;background: {{ cBadgeBg }};color: {{ cBadgeFg }};border:1px solid {{ cBadgeBd }}">{{ cBadge }}</div>
+      </div>
+
+      <div style="margin:4px 0 16px">
+        <div style="font:700 30px/1.1 'Space Grotesk',sans-serif;letter-spacing:-0.02em;color:#12295C">ROTA {{ cNome }}</div>
+        <div style="color:#5C6980;font-size:14px;margin-top:5px">{{ cDataFmt }}</div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #E2E7EF;border-radius:16px;padding:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 10px">
+          <div>
+            <div style="color:#5C6980;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Esperados</div>
+            <div style="font:700 34px/1.05 'Space Grotesk',sans-serif;margin-top:4px;color:#12295C">{{ cEsp }}</div>
+          </div>
+          <div>
+            <div style="color:#5C6980;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Conferidos</div>
+            <div style="font:700 34px/1.05 'Space Grotesk',sans-serif;margin-top:4px;color:#0B6B45">{{ cConf }}</div>
+          </div>
+          <div>
+            <div style="color:#5C6980;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Faltam</div>
+            <div style="font:700 34px/1.05 'Space Grotesk',sans-serif;margin-top:4px;color: {{ cFaltColor }}">{{ cFalt }}</div>
+          </div>
+          <div>
+            <div style="color:#5C6980;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Excedentes</div>
+            <div style="font:700 34px/1.05 'Space Grotesk',sans-serif;margin-top:4px;color: {{ cExcColor }}">{{ cExc }}</div>
+          </div>
+        </div>
+
+        <div style="margin-top:18px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px">
+            <div style="font:600 15px/1 'IBM Plex Mono',monospace;color:#12295C">{{ cRatio }}</div>
+            <div style="color:#5C6980;font-size:13px">{{ cPctLabel }}</div>
+          </div>
+          <div style="height:10px;border-radius:99px;background:#EDF1F6;overflow:hidden">
+            <div style="height:100%;border-radius:99px;background: {{ cBarColor }};width: {{ cBarW }};transition:width .25s ease"></div>
+          </div>
+          <sc-if value="{{ cExcAviso }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:8px;color:#8A5A00;font-size:13px;font-weight:600">{{ cExcAviso }}</div>
+          </sc-if>
+        </div>
+      </div>
+
+      <sc-if value="{{ cCompleta }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:14px;padding:14px 16px;border-radius:14px;background:#E6F6EE;border:1px solid #BFE6D4;animation:popIn .2s ease">
+          <div style="font:700 16px/1.3 'Space Grotesk',sans-serif;color:#0B6B45">✓ Rota conferida por completo</div>
+          <div style="color:#2F5F4C;font-size:14px;margin-top:4px">{{ cCompletaTexto }}</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ cAtiva }}" hint-placeholder-val="{{ true }}">
+        <div style="margin-top:14px;position:sticky;top:56px;z-index:15;background:#F5F7FA;padding:8px 0 10px">
+          <sc-if value="{{ fbMsg }}" hint-placeholder-val="{{ false }}">
+            <div role="status" style="margin-bottom:10px;padding:12px 14px;border-radius:12px;background: {{ fbBg }};border:1px solid {{ fbBd }};color: {{ fbFg }};animation:fbIn .16s ease">
+              <div style="font:700 15px/1.3 'Space Grotesk',sans-serif">{{ fbMsg }}</div>
+              <sc-if value="{{ fbSub }}" hint-placeholder-val="{{ false }}">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;margin-top:4px">{{ fbSub }}</div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <button type="button" onClick="{{ onScan }}" style="width:100%;min-height:60px;background:#12295C;color:#FFDD00;border:none;border-radius:14px;font:700 17px/1 'Space Grotesk',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="background:#1B3D86" style-active="transform:scale(0.995)">📷 Escanear pacote</button>
+
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <label for="c-cod" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Código do pacote</label>
+            <input id="c-cod" type="text" inputMode="numeric" autoComplete="off" placeholder="Digite o código do pacote" value="{{ cCodigo }}" onChange="{{ onCodigo }}" onKeyDown="{{ onCodigoKey }}" ref="{{ codeRef }}" style="flex:1;min-width:0;box-sizing:border-box;height:54px;padding:0 14px;background:#fff;border:1px solid #D9E0EA;border-radius:12px;color:#0F1B33;font-size:16px;font-family:'IBM Plex Mono',monospace;outline:none" style-focus="border-color:#12295C" />
+            <button type="button" onClick="{{ onAdd }}" disabled="{{ addBusy }}" style="flex:0 0 auto;min-width:110px;min-height:54px;padding:0 16px;background:#FFDD00;color:#12295C;border:none;border-radius:12px;font:700 15px/1 'Space Grotesk',sans-serif;cursor:pointer" style-hover="background:#FFE94D">{{ addBtn }}</button>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+            <label for="c-parada" style="flex:0 0 auto;font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#5C6980">Parada (opcional)</label>
+            <input id="c-parada" type="text" placeholder="001" value="{{ cParada }}" onChange="{{ onParada }}" style="flex:1;min-width:0;box-sizing:border-box;height:44px;padding:0 12px;background:#fff;border:1px solid #D9E0EA;border-radius:10px;color:#0F1B33;font-size:15px;font-family:'IBM Plex Mono',monospace;outline:none" style-focus="border-color:#12295C" />
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ cFinalizada }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:14px;padding:14px 16px;border-radius:12px;background:#fff;border:1px solid #E2E7EF">
+          <div style="font:700 15px/1.3 'Space Grotesk',sans-serif;margin-bottom:6px;color:#12295C">Esta rota já foi finalizada.</div>
+          <div style="color:#5C6980;font-size:14px">{{ cFinalTexto }}</div>
+        </div>
+      </sc-if>
+
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <sc-if value="{{ cAtiva }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ onFinalizarAsk }}" style="flex:1;min-width:150px;min-height:50px;background:#fff;color:#12295C;border:1px solid #12295C;border-radius:12px;font:600 15px/1 'Space Grotesk',sans-serif;cursor:pointer" style-hover="background:#EEF2FA">Finalizar rota</button>
+        </sc-if>
+        <button type="button" onClick="{{ onExportar }}" style="flex:1;min-width:150px;min-height:50px;background:#fff;color:#12295C;border:1px solid #D9E0EA;border-radius:12px;font:600 15px/1 'Space Grotesk',sans-serif;cursor:pointer" style-hover="border-color:#12295C">Exportar rota</button>
+      </div>
+
+      <div style="margin-top:24px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">
+          <div style="font:700 15px/1 'Space Grotesk',sans-serif;color:#12295C">Pacotes conferidos</div>
+          <div style="color:#5C6980;font-size:13px">{{ cListaInfo }}</div>
+        </div>
+        <label for="c-busca" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Pesquisar código</label>
+        <input id="c-busca" type="text" placeholder="Pesquisar pacote..." value="{{ busca }}" onChange="{{ onBusca }}" style="width:100%;box-sizing:border-box;height:48px;padding:0 14px;background:#fff;border:1px solid #D9E0EA;border-radius:12px;color:#0F1B33;font-size:15px;font-family:'IBM Plex Mono',monospace;outline:none;margin-bottom:12px" style-focus="border-color:#12295C" />
+
+        <sc-if value="{{ listaVazia }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center;padding:30px 16px;background:#fff;border:1px dashed #C9D3E2;border-radius:14px;color:#5C6980;font-size:14px">{{ listaVaziaMsg }}</div>
+        </sc-if>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <sc-for list="{{ pacotes }}" as="p" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #E2E7EF;border-radius:12px;padding:12px 12px 12px 14px">
+              <div style="flex:0 0 auto;min-width:34px;text-align:center;font:600 14px/1 'IBM Plex Mono',monospace;color:#5C6980">{{ p.seq }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 16px/1.2 'IBM Plex Mono',monospace;word-break:break-all;color:#0F1B33">{{ p.codigo }}</div>
+                <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:4px">
+                  <span style="color:#5C6980;font-size:12px;font-family:'IBM Plex Mono',monospace">{{ p.hora }}</span>
+                  <sc-if value="{{ p.parada }}" hint-placeholder-val="{{ false }}">
+                    <span style="padding:2px 7px;border-radius:999px;background:#EEF2FA;border:1px solid #D3DEF2;color:#12295C;font:600 10.5px/1.4 'IBM Plex Sans',sans-serif">PARADA {{ p.parada }}</span>
+                  </sc-if>
+                  <sc-if value="{{ p.isExc }}" hint-placeholder-val="{{ false }}">
+                    <span style="padding:2px 7px;border-radius:999px;background:#FFF6C2;border:1px solid #FFE27A;color:#6B4E00;font:700 10.5px/1.4 'IBM Plex Sans',sans-serif;letter-spacing:0.05em">EXCEDENTE</span>
+                  </sc-if>
+                </div>
+              </div>
+              <sc-if value="{{ p.removivel }}" hint-placeholder-val="{{ true }}">
+                <button type="button" onClick="{{ p.onRemove }}" aria-label="Remover pacote" style="flex:0 0 auto;width:44px;height:44px;background:#fff;border:1px solid #D9E0EA;border-radius:10px;color:#5C6980;font-size:16px;cursor:pointer" style-hover="border-color:#C0342B;color:#B42318">✕</button>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isHist }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;width:100%;max-width:860px;margin:0 auto;box-sizing:border-box;padding:20px 18px 110px">
+      <h1 style="margin:0 0 14px;font:700 24px/1.2 'Space Grotesk',sans-serif;letter-spacing:-0.02em;color:#12295C">Histórico</h1>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:16px">
+        <input type="text" placeholder="Filtrar por rota..." value="{{ hRota }}" onChange="{{ onHRota }}" aria-label="Filtrar por rota" style="box-sizing:border-box;height:46px;padding:0 12px;background:#fff;border:1px solid #D9E0EA;border-radius:10px;color:#0F1B33;font-size:15px;outline:none" style-focus="border-color:#12295C" />
+        <input type="date" value="{{ hData }}" onChange="{{ onHData }}" aria-label="Filtrar por data" style="box-sizing:border-box;height:46px;padding:0 12px;background:#fff;border:1px solid #D9E0EA;border-radius:10px;color:#0F1B33;font-size:15px;outline:none" style-focus="border-color:#12295C" />
+        <select value="{{ hStatus }}" onChange="{{ onHStatus }}" aria-label="Filtrar por status" style="box-sizing:border-box;height:46px;padding:0 10px;background:#fff;border:1px solid #D9E0EA;border-radius:10px;color:#0F1B33;font-size:15px;outline:none">
+          <option value="TODOS">Todos os status</option>
+          <option value="EM_CONFERENCIA">Em conferência</option>
+          <option value="FINALIZADA">Finalizada</option>
+          <option value="COMPLETA">Resultado completo</option>
+          <option value="FALTANDO">Com faltantes</option>
+          <option value="EXCEDENTE">Com excedentes</option>
+        </select>
+      </div>
+      <sc-if value="{{ histVazio }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center;padding:38px 20px;background:#fff;border:1px dashed #C9D3E2;border-radius:16px;color:#5C6980;font-size:14px">{{ histVazioMsg }}</div>
+      </sc-if>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
+        <sc-for list="{{ todas }}" as="r" hint-placeholder-count="3">
+          <button type="button" onClick="{{ r.onOpen }}" style="display:block;width:100%;text-align:left;background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:16px;cursor:pointer;color:#0F1B33;font-family:inherit" style-hover="border-color:#12295C">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+              <div>
+                <div style="font:700 18px/1.2 'Space Grotesk',sans-serif;color:#12295C">{{ r.nome }}</div>
+                <div style="color:#5C6980;font-size:13px;margin-top:3px">{{ r.dataFmt }}</div>
+              </div>
+              <div style="flex:0 0 auto;padding:6px 10px;border-radius:999px;font:700 11.5px/1.2 'IBM Plex Sans',sans-serif;background: {{ r.badgeBg }};color: {{ r.badgeFg }};border:1px solid {{ r.badgeBd }}">{{ r.badge }}</div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:#5C6980">
+              <span><span style="color:#0F1B33;font-weight:700">{{ r.esperados }}</span> esperados</span>
+              <span><span style="color:#0F1B33;font-weight:700">{{ r.conferidos }}</span> conferidos</span>
+              <span>{{ r.resultado }}</span>
+            </div>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isPerfil }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;width:100%;max-width:520px;margin:0 auto;box-sizing:border-box;padding:20px 18px 110px">
+      <h1 style="margin:0 0 16px;font:700 24px/1.2 'Space Grotesk',sans-serif;letter-spacing:-0.02em;color:#12295C">Perfil</h1>
+      <div style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:16px;margin-bottom:12px">
+        <div style="color:#5C6980;font-size:11.5px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600">Nome</div>
+        <div style="font-size:16px;margin-top:4px">{{ userNome }}</div>
+        <div style="height:14px"></div>
+        <div style="color:#5C6980;font-size:11.5px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600">E-mail</div>
+        <div style="font-size:16px;margin-top:4px;font-family:'IBM Plex Mono',monospace">{{ userEmail }}</div>
+      </div>
+      <div style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:16px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
+          <div style="font:700 15px/1 'Space Grotesk',sans-serif;color:#12295C">Assinatura</div>
+          <div style="padding:6px 10px;border-radius:999px;font:700 11.5px/1.2 'IBM Plex Sans',sans-serif;background: {{ assBg }};color: {{ assFg }};border:1px solid {{ assBd }}">{{ assLabel }}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <div style="color:#5C6980;font-size:11.5px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600">Início</div>
+            <div style="font-size:15px;margin-top:3px;font-family:'IBM Plex Mono',monospace">{{ assInicio }}</div>
+          </div>
+          <div>
+            <div style="color:#5C6980;font-size:11.5px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600">Vencimento</div>
+            <div style="font-size:15px;margin-top:3px;font-family:'IBM Plex Mono',monospace">{{ assFim }}</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;color:#5C6980;font-size:14px">{{ assDias }}</div>
+      </div>
+      <button type="button" onClick="{{ onLogout }}" style="width:100%;min-height:50px;background:#fff;color:#B42318;border:1px solid #FECDCA;border-radius:12px;font:600 15px/1 'Space Grotesk',sans-serif;cursor:pointer" style-hover="background:#FEF3F2">Sair da conta</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ adminArea }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;width:100%;max-width:1080px;margin:0 auto;box-sizing:border-box;padding:0 0 40px">
+      <div style="position:sticky;top:56px;z-index:20;background:#F5F7FA;border-bottom:1px solid #E2E7EF;display:flex;gap:4px;overflow-x:auto;padding:8px 14px">
+        <sc-for list="{{ adminTabs }}" as="t" hint-placeholder-count="5">
+          <button type="button" onClick="{{ t.onClick }}" style="flex:0 0 auto;min-height:42px;padding:0 14px;border-radius:10px;border:1px solid {{ t.bd }};background: {{ t.bg }};color: {{ t.fg }};font:600 14px/1 'Space Grotesk',sans-serif;cursor:pointer">{{ t.label }}</button>
+        </sc-for>
+      </div>
+
+      <div style="padding:20px 18px">
+        <sc-if value="{{ isADash }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <h1 style="margin:0 0 16px;font:700 23px/1.2 'Space Grotesk',sans-serif;color:#12295C">Painel administrativo</h1>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">
+              <sc-for list="{{ aStats }}" as="s" hint-placeholder-count="6">
+                <div style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:14px 16px">
+                  <div style="color:#5C6980;font-size:11.5px;letter-spacing:0.07em;text-transform:uppercase;font-weight:600">{{ s.label }}</div>
+                  <div style="font:700 28px/1.1 'Space Grotesk',sans-serif;margin-top:6px;color: {{ s.color }}">{{ s.valor }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isAUsers }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+              <h1 style="margin:0;font:700 23px/1.2 'Space Grotesk',sans-serif;color:#12295C">Usuários</h1>
+              <button type="button" onClick="{{ onNovoUsuario }}" style="min-height:46px;padding:0 16px;background:#FFDD00;color:#12295C;border:none;border-radius:12px;font:700 15px/1 'Space Grotesk',sans-serif;cursor:pointer" style-hover="background:#FFE94D">+ Criar usuário</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ usuarios }}" as="u" hint-placeholder-count="4">
+                <div style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:14px 16px">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                    <div style="min-width:0">
+                      <div style="font:700 16px/1.25 'Space Grotesk',sans-serif;color:#12295C">{{ u.nome }}</div>
+                      <div style="font-size:13.5px;color:#5C6980;font-family:'IBM Plex Mono',monospace;margin-top:3px;word-break:break-all">{{ u.email }}</div>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <span style="padding:5px 9px;border-radius:999px;font:700 11px/1.2 'IBM Plex Sans',sans-serif;background:#EEF2FA;border:1px solid #D3DEF2;color:#12295C">{{ u.tipo }}</span>
+                      <span style="padding:5px 9px;border-radius:999px;font:700 11px/1.2 'IBM Plex Sans',sans-serif;background: {{ u.stBg }};border:1px solid {{ u.stBd }};color: {{ u.stFg }}">{{ u.statusLabel }}</span>
+                      <span style="padding:5px 9px;border-radius:999px;font:700 11px/1.2 'IBM Plex Sans',sans-serif;background: {{ u.asBg }};border:1px solid {{ u.asBd }};color: {{ u.asFg }}">{{ u.assLabel }}</span>
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:13px;color:#5C6980">
+                    <span>Vencimento: <span style="font-family:'IBM Plex Mono',monospace;color:#0F1B33">{{ u.venc }}</span></span>
+                    <span>Rotas: <span style="color:#0F1B33;font-weight:700">{{ u.rotas }}</span></span>
+                    <span>Pacotes: <span style="color:#0F1B33;font-weight:700">{{ u.pacotes }}</span></span>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+                    <button type="button" onClick="{{ u.onEdit }}" style="min-height:42px;padding:0 14px;background:#fff;border:1px solid #D9E0EA;border-radius:10px;color:#12295C;font:600 14px/1 'IBM Plex Sans',sans-serif;cursor:pointer" style-hover="border-color:#12295C">Editar</button>
+                    <button type="button" onClick="{{ u.onToggle }}" style="min-height:42px;padding:0 14px;background:#fff;border:1px solid #D9E0EA;border-radius:10px;color:#12295C;font:600 14px/1 'IBM Plex Sans',sans-serif;cursor:pointer" style-hover="border-color:#12295C">{{ u.toggleLabel }}</button>
+                    <button type="button" onClick="{{ u.onDelete }}" style="min-height:42px;padding:0 14px;background:#fff;border:1px solid #FECDCA;border-radius:10px;color:#B42318;font:600 14px/1 'IBM Plex Sans',sans-serif;cursor:pointer" style-hover="background:#FEF3F2">Excluir</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isASubs }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <h1 style="margin:0 0 14px;font:700 23px/1.2 'Space Grotesk',sans-serif;color:#12295C">Assinaturas</h1>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ assinaturas }}" as="a" hint-placeholder-count="4">
+                <div style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:14px 16px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                    <div>
+                      <div style="font:700 16px/1.25 'Space Grotesk',sans-serif;color:#12295C">{{ a.nome }}</div>
+                      <div style="font-size:13px;color:#5C6980;font-family:'IBM Plex Mono',monospace;margin-top:3px">{{ a.email }}</div>
+                    </div>
+                    <span style="padding:5px 9px;border-radius:999px;font:700 11px/1.2 'IBM Plex Sans',sans-serif;background: {{ a.bg }};border:1px solid {{ a.bd }};color: {{ a.fg }}">{{ a.label }}</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:12px">
+                    <div>
+                      <div style="color:#5C6980;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600">Início</div>
+                      <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;margin-top:3px">{{ a.inicio }}</div>
+                    </div>
+                    <div>
+                      <div style="color:#5C6980;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600">Vencimento</div>
+                      <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;margin-top:3px">{{ a.fim }}</div>
+                    </div>
+                    <div>
+                      <div style="color:#5C6980;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600">Dias restantes</div>
+                      <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;margin-top:3px;color: {{ a.diasColor }}">{{ a.dias }}</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+                    <button type="button" onClick="{{ a.onRenovar }}" style="min-height:42px;padding:0 14px;background:#12295C;border:none;border-radius:10px;color:#fff;font:600 14px/1 'IBM Plex Sans',sans-serif;cursor:pointer">Renovar +30 dias</button>
+                    <button type="button" onClick="{{ a.onEdit }}" style="min-height:42px;padding:0 14px;background:#fff;border:1px solid #D9E0EA;border-radius:10px;color:#12295C;font:600 14px/1 'IBM Plex Sans',sans-serif;cursor:pointer">Editar datas</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isARoutes }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <h1 style="margin:0 0 14px;font:700 23px/1.2 'Space Grotesk',sans-serif;color:#12295C">Rotas</h1>
+            <sc-if value="{{ semRotasAdmin }}" hint-placeholder-val="{{ false }}">
+              <div style="text-align:center;padding:38px 20px;background:#fff;border:1px dashed #C9D3E2;border-radius:16px;color:#5C6980;font-size:14px">Nenhuma rota registrada.</div>
+            </sc-if>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
+              <sc-for list="{{ rotasAdmin }}" as="r" hint-placeholder-count="4">
+                <div style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:16px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
+                    <div>
+                      <div style="font:700 17px/1.2 'Space Grotesk',sans-serif;color:#12295C">{{ r.nome }}</div>
+                      <div style="color:#5C6980;font-size:13px;margin-top:3px">{{ r.dataFmt }} · {{ r.dono }}</div>
+                    </div>
+                    <div style="flex:0 0 auto;padding:6px 10px;border-radius:999px;font:700 11.5px/1.2 'IBM Plex Sans',sans-serif;background: {{ r.badgeBg }};color: {{ r.badgeFg }};border:1px solid {{ r.badgeBd }}">{{ r.badge }}</div>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:#5C6980">
+                    <span><span style="color:#0F1B33;font-weight:700">{{ r.esperados }}</span> esperados</span>
+                    <span><span style="color:#0F1B33;font-weight:700">{{ r.conferidos }}</span> conferidos</span>
+                    <span>{{ r.resultado }}</span>
+                  </div>
+                  <button type="button" onClick="{{ r.onExport }}" style="width:100%;min-height:42px;margin-top:12px;background:#fff;border:1px solid #D9E0EA;border-radius:10px;color:#12295C;font:600 14px/1 'IBM Plex Sans',sans-serif;cursor:pointer" style-hover="border-color:#12295C">Exportar</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isAConfig }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:520px">
+            <h1 style="margin:0 0 14px;font:700 23px/1.2 'Space Grotesk',sans-serif;color:#12295C">Configurações</h1>
+            <div style="background:#fff;border:1px solid #E2E7EF;border-radius:14px;padding:16px">
+              <div style="font:700 15px/1 'Space Grotesk',sans-serif;color:#12295C;margin-bottom:12px">Validação do código do pacote</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div>
+                  <label for="cfg-min" style="display:block;font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#5C6980;margin-bottom:6px">Mínimo de dígitos</label>
+                  <input id="cfg-min" type="text" inputMode="numeric" value="{{ cfgMin }}" onChange="{{ onCfgMin }}" style="width:100%;box-sizing:border-box;height:46px;padding:0 12px;background:#F7F9FC;border:1px solid #D9E0EA;border-radius:10px;font-size:15px;font-family:'IBM Plex Mono',monospace;outline:none" style-focus="border-color:#12295C;background:#fff" />
+                </div>
+                <div>
+                  <label for="cfg-max" style="display:block;font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#5C6980;margin-bottom:6px">Máximo de dígitos</label>
+                  <input id="cfg-max" type="text" inputMode="numeric" value="{{ cfgMax }}" onChange="{{ onCfgMax }}" style="width:100%;box-sizing:border-box;height:46px;padding:0 12px;background:#F7F9FC;border:1px solid #D9E0EA;border-radius:10px;font-size:15px;font-family:'IBM Plex Mono',monospace;outline:none" style-focus="border-color:#12295C;background:#fff" />
+                </div>
+              </div>
+              <div style="color:#5C6980;font-size:13px;margin-top:10px;line-height:1.6">Aplica-se ao scanner e à entrada manual — ambos usam a mesma validação.</div>
+              <button type="button" onClick="{{ onSalvarCfg }}" style="width:100%;min-height:48px;margin-top:16px;background:#FFDD00;color:#12295C;border:none;border-radius:12px;font:700 15px/1 'Space Grotesk',sans-serif;cursor:pointer">Salvar configurações</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ navVisivel }}" hint-placeholder-val="{{ false }}">
+    <nav style="position:fixed;left:0;right:0;bottom:0;z-index:25;background:#fff;border-top:1px solid #E2E7EF;display:flex;padding:6px 0 calc(6px + env(safe-area-inset-bottom))">
+      <button type="button" onClick="{{ goDash }}" style="flex:1;min-height:56px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:inherit;font-size:11px;font-weight:700;color: {{ navInicio }}">
+        <span style="font-size:19px;line-height:1">🏠</span>Início
+      </button>
+      <button type="button" onClick="{{ goConferir }}" style="flex:1;min-height:56px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:inherit;font-size:11px;font-weight:700;color:#12295C">
+        <span style="width:48px;height:34px;border-radius:12px;background:#FFDD00;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1">📷</span>Conferir
+      </button>
+      <button type="button" onClick="{{ goHist }}" style="flex:1;min-height:56px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:inherit;font-size:11px;font-weight:700;color: {{ navHist }}">
+        <span style="font-size:19px;line-height:1">📋</span>Histórico
+      </button>
+      <button type="button" onClick="{{ goPerfil }}" style="flex:1;min-height:56px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:inherit;font-size:11px;font-weight:700;color: {{ navPerfil }}">
+        <span style="font-size:19px;line-height:1">👤</span>Perfil
+      </button>
+    </nav>
+  </sc-if>
+
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div role="dialog" aria-modal="true" style="position:fixed;inset:0;z-index:40;background:rgba(15,27,51,.45);display:flex;align-items:flex-end;justify-content:center" onClick="{{ onModalBackdrop }}">
+      <div onClick="{{ stop }}" style="width:100%;max-width:480px;background:#fff;border-radius:18px 18px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom));animation:fbIn .18s ease">
+        <div style="font:700 19px/1.25 'Space Grotesk',sans-serif;margin-bottom:8px;color:#12295C">{{ modalTitulo }}</div>
+        <div style="color:#5C6980;font-size:14px;line-height:1.6;white-space:pre-line">{{ modalTexto }}</div>
+        <sc-if value="{{ modalResumo }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:14px;padding:12px 14px;background:#F7F9FC;border:1px solid #E2E7EF;border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.8;color:#0F1B33;white-space:pre-line">{{ modalResumo }}</div>
+        </sc-if>
+        <div style="display:flex;gap:8px;margin-top:20px">
+          <button type="button" onClick="{{ onModalCancel }}" style="flex:1;min-height:50px;background:#fff;color:#12295C;border:1px solid #D9E0EA;border-radius:12px;font:600 15px/1 'Space Grotesk',sans-serif;cursor:pointer">{{ modalCancelLabel }}</button>
+          <button type="button" onClick="{{ onModalOk }}" style="flex:1;min-height:50px;background: {{ modalOkBg }};color: {{ modalOkFg }};border:none;border-radius:12px;font:700 15px/1 'Space Grotesk',sans-serif;cursor:pointer">{{ modalOkLabel }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ formOpen }}" hint-placeholder-val="{{ false }}">
+    <div role="dialog" aria-modal="true" style="position:fixed;inset:0;z-index:44;background:rgba(15,27,51,.45);display:flex;align-items:center;justify-content:center;padding:16px">
+      <div style="width:100%;max-width:460px;max-height:88vh;overflow:auto;background:#fff;border-radius:16px;padding:20px;animation:popIn .18s ease">
+        <div style="font:700 19px/1.25 'Space Grotesk',sans-serif;color:#12295C;margin-bottom:16px">{{ formTitulo }}</div>
+
+        <label for="u-nome" style="display:block;font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#5C6980;margin-bottom:6px">Nome</label>
+        <input id="u-nome" type="text" value="{{ uNome }}" onChange="{{ onUNome }}" style="width:100%;box-sizing:border-box;height:48px;padding:0 12px;background:#F7F9FC;border:1px solid #D9E0EA;border-radius:10px;font-size:16px;outline:none;margin-bottom:14px" style-focus="border-color:#12295C;background:#fff" />
+
+        <label for="u-email" style="display:block;font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#5C6980;margin-bottom:6px">E-mail</label>
+        <input id="u-email" type="email" value="{{ uEmail }}" onChange="{{ onUEmail }}" style="width:100%;box-sizing:border-box;height:48px;padding:0 12px;background:#F7F9FC;border:1px solid #D9E0EA;border-radius:10px;font-size:16px;font-family:'IBM Plex Mono',monospace;outline:none;margin-bottom:14px" style-focus="border-color:#12295C;background:#fff" />
+
+        <label for="u-senha" style="display:block;font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#5C6980;margin-bottom:6px">{{ uSenhaLabel }}</label>
+        <input id="u-senha" type="password" value="{{ uSenha }}" onChange="{{ onUSenha }}" style="width:100%;box-sizing:border-box;height:48px;padding:0 12px;background:#F7F9FC;border:1px solid #D9E0EA;border-radius:10px;font-size:16px;outline:none;margin-bottom:14px" style-focus="border-color:#12295C;background:#fff" />
+
+        <label for="u-tipo" style="display:block;font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#5C6980;margin-bottom:6px">Tipo de usuário</label>
+        <select id="u-tipo" value="{{ uTipo }}" onChange="{{ onUTipo }}" style="width:100%;box-sizing:border-box;height:48px;padding:0 10px;background:#F7F9FC;border:1px solid #D9E0EA;border-radius:10px;font-size:16px;outline:none;margin-bottom:14px">
+          <option value="USUARIO">Usuário</option>
+          <option value="ADMIN">Administrador</option>
+        </select>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label for="u-ini" style="display:block;font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#5C6980;margin-bottom:6px">Assinatura — início</label>
+            <input id="u-ini" type="date" value="{{ uIni }}" onChange="{{ onUIni }}" style="width:100%;box-sizing:border-box;height:48px;padding:0 10px;background:#F7F9FC;border:1px solid #D9E0EA;border-radius:10px;font-size:15px;outline:none" style-focus="border-color:#12295C;background:#fff" />
+          </div>
+          <div>
+            <label for="u-fim" style="display:block;font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#5C6980;margin-bottom:6px">Assinatura — fim</label>
+            <input id="u-fim" type="date" value="{{ uFim }}" onChange="{{ onUFim }}" style="width:100%;box-sizing:border-box;height:48px;padding:0 10px;background:#F7F9FC;border:1px solid #D9E0EA;border-radius:10px;font-size:15px;outline:none" style-focus="border-color:#12295C;background:#fff" />
+          </div>
+        </div>
+
+        <sc-if value="{{ formErr }}" hint-placeholder-val="{{ false }}">
+          <div role="alert" style="margin-top:14px;padding:11px 13px;border-radius:10px;background:#FEF3F2;border:1px solid #FECDCA;color:#B42318;font-size:13.5px">{{ formErr }}</div>
+        </sc-if>
+
+        <div style="display:flex;gap:8px;margin-top:18px">
+          <button type="button" onClick="{{ onFormCancel }}" style="flex:1;min-height:50px;background:#fff;color:#12295C;border:1px solid #D9E0EA;border-radius:12px;font:600 15px/1 'Space Grotesk',sans-serif;cursor:pointer">Cancelar</button>
+          <button type="button" onClick="{{ onFormSave }}" disabled="{{ formBusy }}" style="flex:1;min-height:50px;background:#FFDD00;color:#12295C;border:none;border-radius:12px;font:700 15px/1 'Space Grotesk',sans-serif;cursor:pointer">{{ formSaveLabel }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ expOpen }}" hint-placeholder-val="{{ false }}">
+    <div role="dialog" aria-modal="true" style="position:fixed;inset:0;z-index:45;background:rgba(15,27,51,.5);display:flex;align-items:center;justify-content:center;padding:16px">
+      <div style="width:100%;max-width:580px;max-height:88vh;display:flex;flex-direction:column;background:#fff;border-radius:16px;overflow:hidden;animation:popIn .18s ease">
+        <div style="padding:15px 18px;border-bottom:1px solid #E2E7EF;display:flex;align-items:center;gap:12px">
+          <div style="flex:1;font:700 17px/1.2 'Space Grotesk',sans-serif;color:#12295C">Exportar rota</div>
+          <button type="button" onClick="{{ onExpClose }}" aria-label="Fechar" style="width:38px;height:38px;background:#fff;border:1px solid #D9E0EA;border-radius:10px;color:#5C6980;cursor:pointer">✕</button>
+        </div>
+        <pre style="flex:1;overflow:auto;margin:0;padding:16px 18px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.7;color:#0F1B33;white-space:pre-wrap;background:#F7F9FC">{{ expTexto }}</pre>
+        <div style="padding:13px 18px;border-top:1px solid #E2E7EF;display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" onClick="{{ onExpCopy }}" style="flex:1;min-width:120px;min-height:48px;background:#fff;color:#12295C;border:1px solid #D9E0EA;border-radius:12px;font:600 15px/1 'Space Grotesk',sans-serif;cursor:pointer">{{ copyLabel }}</button>
+          <button type="button" onClick="{{ onExpDownload }}" style="flex:1;min-width:120px;min-height:48px;background:#fff;color:#12295C;border:1px solid #D9E0EA;border-radius:12px;font:600 15px/1 'Space Grotesk',sans-serif;cursor:pointer">Baixar .txt</button>
+          <button type="button" onClick="{{ onExpPdf }}" style="flex:1;min-width:120px;min-height:48px;background:#FFDD00;color:#12295C;border:none;border-radius:12px;font:700 15px/1 'Space Grotesk',sans-serif;cursor:pointer">Gerar PDF</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ scanOpen }}" hint-placeholder-val="{{ false }}">
+    <div role="dialog" aria-modal="true" style="position:fixed;inset:0;z-index:50;background:#0B1428;color:#fff;display:flex;flex-direction:column">
+      <div style="padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(255,255,255,.15)">
+        <div style="font:700 16px/1.2 'Space Grotesk',sans-serif">Escanear pacote</div>
+        <button type="button" onClick="{{ onScanClose }}" aria-label="Fechar scanner" style="width:40px;height:40px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:10px;color:#fff;cursor:pointer">✕</button>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:22px">
+        <div style="width:100%;max-width:320px;aspect-ratio:4/3;border-radius:16px;background:repeating-linear-gradient(135deg,#122142 0 10px,#16274C 10px 20px);border:1px solid rgba(255,255,255,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:18px;box-sizing:border-box;text-align:center">
+          <div style="width:78%;height:34%;border:2px solid #FFDD00;border-radius:10px"></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#B9C6E4;line-height:1.6">ESPAÇO RESERVADO — PREVIEW DA CÂMERA<br />leitor de código de barras (fase 2)</div>
+        </div>
+        <div style="color:#B9C6E4;font-size:14px;text-align:center;max-width:320px;line-height:1.6">A leitura por câmera usará a mesma validação da entrada manual. O scanner permanece aberto para leituras consecutivas.</div>
+        <sc-if value="{{ scanFb }}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="width:100%;max-width:320px;padding:12px 14px;border-radius:12px;background: {{ scanFbBg }};border:1px solid {{ scanFbBd }};color: {{ scanFbFg }};animation:fbIn .16s ease">
+            <div style="font:700 15px/1.3 'Space Grotesk',sans-serif">{{ scanFb }}</div>
+            <sc-if value="{{ scanFbSub }}" hint-placeholder-val="{{ false }}">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;margin-top:4px">{{ scanFbSub }}</div>
+            </sc-if>
+          </div>
+        </sc-if>
+        <button type="button" onClick="{{ onScanClose }}" style="width:100%;max-width:320px;min-height:56px;background:#FFDD00;color:#12295C;border:none;border-radius:12px;font:700 16px/1 'Space Grotesk',sans-serif;cursor:pointer">Digitar manualmente</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastMsg }}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:60;max-width:92vw;padding:12px 16px;border-radius:12px;background:#12295C;color:#fff;font-size:14px;font-weight:500;box-shadow:0 10px 26px rgba(15,27,51,.25);animation:fbIn .18s ease">{{ toastMsg }}</div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:420,&quot;height&quot;:900}}">
+const KEY = 'rotas.app.v3';
+
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function addDays(d, n) { return new Date(d.getTime() + n * 86400000); }
+function fmtData(s) {
+  if (!s) return '—';
+  const p = String(s).split('-');
+  return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : s;
+}
+function fmtHora(ts) { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function diasAte(s) {
+  if (!s) return 0;
+  const fim = new Date(s + 'T23:59:59').getTime();
+  return Math.ceil((fim - Date.now()) / 86400000);
+}
+
+function estadoInicial() {
+  return { users: [], routes: [], config: { codigoMin: 4, codigoMax: 30 } };
+}
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    let db = null;
+    try { const raw = localStorage.getItem(KEY); if (raw) db = JSON.parse(raw); } catch (e) { console.warn('estado local inválido', e); }
+    if (!db || !Array.isArray(db.routes) || !Array.isArray(db.users)) db = estadoInicial();
+    if (!db.config) db.config = { codigoMin: 4, codigoMax: 30 };
+    this.state = {
+      db, userId: null, screen: 'login',
+      email: '', senha: '', loginErr: '', loginBusy: false,
+      rotaId: null,
+      fNome: '', fQtd: '', fData: iso(new Date()), eNome: '', eQtd: '', eData: '', criando: false,
+      codigo: '', parada: '', addBusy: false, fb: null, busca: '',
+      hRota: '', hData: '', hStatus: 'TODOS',
+      modal: null, form: null, formErr: '', formBusy: false,
+      exp: null, expRotaId: null, copiado: false,
+      scanOpen: false, scanFb: null, toast: '',
+      cfgMin: String(db.config.codigoMin), cfgMax: String(db.config.codigoMax),
+      offline: typeof navigator !== 'undefined' && navigator.onLine === false
+    };
+    this.codeRef = React.createRef();
+    this.fbTimer = null; this.toastTimer = null; this.scanTimer = null;
+    this.onNet = () => this.setState({ offline: !navigator.onLine });
+  }
+
+  componentDidMount() {
+    window.addEventListener('online', this.onNet);
+    window.addEventListener('offline', this.onNet);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('online', this.onNet);
+    window.removeEventListener('offline', this.onNet);
+    clearTimeout(this.fbTimer); clearTimeout(this.toastTimer); clearTimeout(this.scanTimer);
+  }
+
+  persist(db, extra) {
+    try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { console.warn('falha ao salvar', e); }
+    this.setState(Object.assign({ db }, extra || {}));
+  }
+  saveRoutes(routes, extra) { this.persist(Object.assign({}, this.state.db, { routes }), extra); }
+  saveUsers(users, extra) { this.persist(Object.assign({}, this.state.db, { users }), extra); }
+
+  cfg() { return this.state.db.config || { codigoMin: 4, codigoMax: 30 }; }
+  me() { return this.state.db.users.find(u => u.id === this.state.userId) || null; }
+  isAdmin() { const u = this.me(); return !!u && u.tipo === 'ADMIN'; }
+  rota() { return this.state.db.routes.find(r => r.id === this.state.rotaId) || null; }
+  minhasRotas() {
+    const id = this.state.userId;
+    return this.state.db.routes.filter(r => r.usuarioId === id);
+  }
+
+  derive(r) {
+    const conferidos = r.pacotes.length;
+    const faltantes = Math.max(r.esperados - conferidos, 0);
+    const excedentes = Math.max(conferidos - r.esperados, 0);
+    const pct = r.esperados > 0 ? Math.round((conferidos / r.esperados) * 100) : 0;
+    const resultado = conferidos < r.esperados ? 'FALTANDO' : (conferidos === r.esperados ? 'COMPLETA' : 'EXCEDENTE');
+    return { conferidos, faltantes, excedentes, pct, barra: Math.min(pct, 100), resultado };
+  }
+
+  assinaturaEstado(u) {
+    if (!u) return 'ATIVA';
+    if (u.status === 'BLOQUEADO') return 'BLOQUEADA';
+    return diasAte(u.assinaturaFim) < 0 ? 'EXPIRADA' : 'ATIVA';
+  }
+
+  flash(tipo, msg, sub) {
+    clearTimeout(this.fbTimer);
+    this.setState({ fb: { tipo, msg, sub }, scanFb: this.state.scanOpen ? { tipo, msg, sub } : null });
+    this.fbTimer = setTimeout(() => this.setState({ fb: null, scanFb: null }), tipo === 'ok' ? 2200 : 3200);
+  }
+  toast(msg) {
+    clearTimeout(this.toastTimer);
+    this.setState({ toast: msg });
+    this.toastTimer = setTimeout(() => this.setState({ toast: '' }), 2600);
+  }
+  focusCode() { setTimeout(() => { if (this.codeRef.current) this.codeRef.current.focus(); }, 30); }
+
+  doLogin = () => {
+    const e = this.state.email.trim().toLowerCase();
+    const senha = this.state.senha;
+    if (!e) return this.setState({ loginErr: 'Informe o e-mail.' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return this.setState({ loginErr: 'Informe um e-mail válido.' });
+    if (!senha) return this.setState({ loginErr: 'Informe a senha.' });
+    this.setState({ loginBusy: true, loginErr: '' });
+    setTimeout(() => {
+      if (!this.state.db.users.length) {
+        return this.setState({ loginBusy: false, loginErr: 'Nenhum usuário cadastrado. Conecte o banco de dados para autenticar.' });
+      }
+      const u = this.state.db.users.find(x => x.email.toLowerCase() === e);
+      if (!u || u.senha !== senha) return this.setState({ loginBusy: false, loginErr: 'E-mail ou senha inválidos.' });
+      this.setState({ loginBusy: false, userId: u.id, screen: u.tipo === 'ADMIN' ? 'adash' : 'dash' });
+    }, 600);
+  };
+
+  criar = () => {
+    const nome = this.state.fNome.trim();
+    const qtd = this.state.fQtd.trim();
+    const data = this.state.fData;
+    let eNome = '', eQtd = '', eData = '';
+    if (!nome) eNome = 'Informe o nome da rota.';
+    if (!qtd) eQtd = 'Informe a quantidade esperada.';
+    else if (!/^\d+$/.test(qtd)) eQtd = 'Use apenas números inteiros.';
+    else if (parseInt(qtd, 10) <= 0) eQtd = 'A quantidade deve ser maior que zero.';
+    if (!data || isNaN(new Date(data + 'T00:00:00').getTime())) eData = 'Informe uma data válida.';
+    if (eNome || eQtd || eData) return this.setState({ eNome, eQtd, eData });
+    this.setState({ eNome: '', eQtd: '', eData: '', criando: true });
+    setTimeout(() => {
+      const rota = {
+        id: 'r-' + Date.now(), usuarioId: this.state.userId, nome, data,
+        esperados: parseInt(qtd, 10), status: 'EM_CONFERENCIA', pacotes: [],
+        createdAt: Date.now(), finalizadaAt: null
+      };
+      this.saveRoutes([rota].concat(this.state.db.routes), {
+        criando: false, screen: 'conf', rotaId: rota.id, fNome: '', fQtd: '',
+        fData: iso(new Date()), codigo: '', parada: '', busca: '', fb: null
+      });
+      this.focusCode();
+    }, 400);
+  };
+
+  registrar(bruto) {
+    const r = this.rota();
+    if (!r) return;
+    if (r.status === 'FINALIZADA') return this.flash('err', 'Esta rota já foi finalizada.');
+    const c = this.cfg();
+    const codigo = String(bruto == null ? '' : bruto).trim();
+    if (!codigo) return this.flash('err', 'Digite ou escaneie um código.');
+    if (!/^\d+$/.test(codigo)) return this.flash('err', 'Código inválido. Digite apenas números.');
+    if (codigo.length < c.codigoMin || codigo.length > c.codigoMax) {
+      return this.flash('err', 'Código inválido. Use de ' + c.codigoMin + ' a ' + c.codigoMax + ' dígitos.');
+    }
+    if (r.pacotes.some(p => p.codigo === codigo)) return this.flash('dup', '⚠ Pacote já conferido', codigo);
+    this.setState({ addBusy: true });
+    setTimeout(() => {
+      const atual = this.rota();
+      if (!atual) return this.setState({ addBusy: false });
+      if (atual.pacotes.some(p => p.codigo === codigo)) {
+        this.setState({ addBusy: false });
+        return this.flash('dup', '⚠ Pacote já conferido', codigo);
+      }
+      const parada = this.state.parada.trim();
+      const pacotes = atual.pacotes.concat([{ id: 'p-' + Date.now() + '-' + codigo, codigo, paradaId: parada || null, horario: Date.now() }]);
+      const routes = this.state.db.routes.map(x => x.id === atual.id ? Object.assign({}, x, { pacotes }) : x);
+      this.saveRoutes(routes, { addBusy: false, codigo: '' });
+      this.flash('ok', '✓ Pacote conferido', codigo + ' · pacote ' + pacotes.length + ' de ' + atual.esperados);
+      if (!this.state.scanOpen) this.focusCode();
+    }, 170);
+  }
+
+  remover(id) {
+    const r = this.rota();
+    if (!r) return;
+    const pacotes = r.pacotes.filter(p => p.id !== id);
+    const routes = this.state.db.routes.map(x => x.id === r.id ? Object.assign({}, x, { pacotes }) : x);
+    this.saveRoutes(routes, { modal: null });
+    this.flash('ok', '✓ Pacote removido', pacotes.length + ' / ' + r.esperados);
+  }
+
+  finalizar() {
+    const r = this.rota();
+    if (!r) return;
+    const routes = this.state.db.routes.map(x => x.id === r.id ? Object.assign({}, x, { status: 'FINALIZADA', finalizadaAt: Date.now() }) : x);
+    this.saveRoutes(routes, { modal: null, fb: null });
+    this.toast('Rota ' + r.nome + ' finalizada.');
+  }
+
+  exportTexto(r) {
+    const d = this.derive(r);
+    const dono = this.state.db.users.find(u => u.id === r.usuarioId);
+    const L = [];
+    L.push('ROTAS — CONFERÊNCIA DE PACOTES');
+    L.push('');
+    L.push('ROTA ' + r.nome);
+    L.push('Data: ' + fmtData(r.data));
+    if (dono) L.push('Conferente: ' + dono.nome);
+    L.push('');
+    L.push('Esperados:  ' + r.esperados);
+    L.push('Conferidos: ' + d.conferidos);
+    L.push('Faltantes:  ' + d.faltantes);
+    L.push('Excedentes: ' + d.excedentes);
+    L.push('');
+    L.push('Status: ' + (r.status === 'FINALIZADA' ? 'FINALIZADA' : 'EM CONFERÊNCIA'));
+    L.push('Resultado: ' + (d.resultado === 'COMPLETA' ? 'CONFERÊNCIA COMPLETA'
+      : d.resultado === 'EXCEDENTE' ? 'CONFERÊNCIA COM EXCEDENTE'
+      : 'CONFERÊNCIA COM FALTANTES (' + d.faltantes + ')'));
+    L.push('');
+    const temParada = r.pacotes.some(p => p.paradaId);
+    if (temParada) {
+      const grupos = {};
+      r.pacotes.forEach((p, i) => {
+        const k = p.paradaId || 'SEM PARADA';
+        (grupos[k] = grupos[k] || []).push({ p, seq: i + 1 });
+      });
+      L.push('PACOTES POR PARADA');
+      L.push('');
+      Object.keys(grupos).sort().forEach(k => {
+        L.push('PARADA ' + k + '  (' + grupos[k].length + ' pacote(s))');
+        grupos[k].forEach(it => {
+          L.push('   ' + it.seq + '. ' + it.p.codigo + '   ' + fmtHora(it.p.horario) + (it.seq > r.esperados ? '   [EXCEDENTE]' : ''));
+        });
+        L.push('');
+      });
+    } else {
+      L.push('PACOTES');
+      L.push('');
+      r.pacotes.forEach((p, i) => {
+        L.push((i + 1) + '. ' + p.codigo + '   ' + fmtHora(p.horario) + ((i + 1) > r.esperados ? '   [EXCEDENTE]' : ''));
+      });
+      L.push('');
+    }
+    if (d.excedentes > 0) L.push('Observação: ' + d.excedentes + ' pacote(s) acima do esperado.');
+    if (d.faltantes > 0) L.push('Observação: ' + d.faltantes + ' pacote(s) não conferido(s).');
+    return L.join('\n');
+  }
+
+  exportPdf(r) {
+    try {
+      const d = this.derive(r);
+      const dono = this.state.db.users.find(u => u.id === r.usuarioId);
+      const logo = new URL('logo-rotas.png', location.href).href;
+      const linhas = r.pacotes.map((p, i) => {
+        const exc = (i + 1) > r.esperados;
+        return '<tr><td style="width:46px;color:#5C6980">' + (i + 1) + '</td><td style="font-family:monospace">' + p.codigo
+          + '</td><td>' + (p.paradaId ? 'Parada ' + p.paradaId : '—') + '</td><td>' + fmtHora(p.horario)
+          + '</td><td style="color:' + (exc ? '#8A5A00' : '#5C6980') + '">' + (exc ? 'EXCEDENTE' : '') + '</td></tr>';
+      }).join('');
+      const resultado = d.resultado === 'COMPLETA' ? 'CONFERÊNCIA COMPLETA'
+        : d.resultado === 'EXCEDENTE' ? 'CONFERÊNCIA COM EXCEDENTE'
+        : 'CONFERÊNCIA COM FALTANTES';
+      const html = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8" /><title>Rota ' + r.nome + '</title>'
+        + '<style>@page{margin:16mm}body{font-family:Helvetica,Arial,sans-serif;color:#0F1B33;margin:0}'
+        + 'h1{font-size:24px;margin:0;color:#12295C}table{width:100%;border-collapse:collapse;font-size:12px}'
+        + 'th{text-align:left;border-bottom:2px solid #12295C;padding:6px 4px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#12295C}'
+        + 'td{padding:6px 4px;border-bottom:1px solid #E2E7EF}'
+        + '.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}'
+        + '.box{border:1px solid #E2E7EF;border-radius:8px;padding:10px}'
+        + '.box b{display:block;font-size:22px;color:#12295C;margin-top:4px}'
+        + '.k{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#5C6980}</style></head><body>'
+        + '<div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid #FFDD00;padding-bottom:12px">'
+        + '<img src="' + logo + '" style="width:54px;height:54px;border-radius:10px" />'
+        + '<div><h1>ROTA ' + r.nome + '</h1><div style="color:#5C6980;font-size:12px;margin-top:4px">Data: ' + fmtData(r.data)
+        + (dono ? ' · Conferente: ' + dono.nome : '') + '</div></div></div>'
+        + '<div class="grid"><div class="box"><span class="k">Esperados</span><b>' + r.esperados + '</b></div>'
+        + '<div class="box"><span class="k">Conferidos</span><b>' + d.conferidos + '</b></div>'
+        + '<div class="box"><span class="k">Faltantes</span><b>' + d.faltantes + '</b></div>'
+        + '<div class="box"><span class="k">Excedentes</span><b>' + d.excedentes + '</b></div></div>'
+        + '<div style="font-size:12px;margin-bottom:18px"><b>Status:</b> ' + (r.status === 'FINALIZADA' ? 'FINALIZADA' : 'EM CONFERÊNCIA')
+        + ' &nbsp;·&nbsp; <b>Resultado:</b> ' + resultado + '</div>'
+        + '<table><thead><tr><th>#</th><th>Código</th><th>Parada</th><th>Hora</th><th></th></tr></thead><tbody>'
+        + linhas + '</tbody></table></body></html>';
+      const w = window.open('', '_blank');
+      if (!w) return this.toast('Permita pop-ups para gerar o PDF.');
+      w.document.write(html);
+      w.document.close();
+      setTimeout(() => { try { w.focus(); w.print(); } catch (e) { console.warn(e); } }, 400);
+    } catch (e) {
+      console.warn(e);
+      this.toast('Não foi possível concluir esta operação. Tente novamente.');
+    }
+  }
+
+  salvarUsuario() {
+    const f = this.state.form;
+    if (!f) return;
+    const nome = (f.nome || '').trim();
+    const email = (f.email || '').trim().toLowerCase();
+    if (!nome) return this.setState({ formErr: 'Informe o nome.' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return this.setState({ formErr: 'Informe um e-mail válido.' });
+    if (this.state.db.users.some(u => u.email.toLowerCase() === email && u.id !== f.id)) {
+      return this.setState({ formErr: 'Já existe um usuário com este e-mail.' });
+    }
+    if (!f.id && (!f.senha || f.senha.length < 6)) return this.setState({ formErr: 'A senha deve ter ao menos 6 caracteres.' });
+    if (f.ini && f.fim && new Date(f.fim) < new Date(f.ini)) return this.setState({ formErr: 'O vencimento não pode ser anterior ao início.' });
+    this.setState({ formErr: '', formBusy: true });
+    setTimeout(() => {
+      let users;
+      if (f.id) {
+        users = this.state.db.users.map(u => u.id === f.id ? Object.assign({}, u, {
+          nome, email, tipo: f.tipo, assinaturaInicio: f.ini, assinaturaFim: f.fim,
+          senha: f.senha ? f.senha : u.senha
+        }) : u);
+      } else {
+        users = this.state.db.users.concat([{
+          id: 'u-' + Date.now(), nome, email, senha: f.senha, tipo: f.tipo, status: 'ATIVO',
+          assinaturaInicio: f.ini, assinaturaFim: f.fim, criadoEm: Date.now()
+        }]);
+      }
+      this.saveUsers(users, { form: null, formBusy: false });
+      this.toast(f.id ? 'Usuário atualizado.' : 'Usuário criado.');
+    }, 350);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const me = this.me();
+    const admin = this.isAdmin();
+    const logged = !!me;
+    const assEstado = this.assinaturaEstado(me);
+    const bloqueado = logged && !admin && (me.status === 'BLOQUEADO' || assEstado === 'EXPIRADA');
+    const screen = !logged ? 'login' : (bloqueado ? 'blocked' : s.screen);
+    const hoje = iso(new Date());
+    const hora = new Date().getHours();
+    const minhas = logged ? this.minhasRotas() : [];
+
+    const chip = (kind) => {
+      if (kind === 'ok') return { bg: '#E6F6EE', fg: '#0B6B45', bd: '#BFE6D4' };
+      if (kind === 'warn') return { bg: '#FFF6C2', fg: '#6B4E00', bd: '#FFE27A' };
+      if (kind === 'err') return { bg: '#FEF3F2', fg: '#B42318', bd: '#FECDCA' };
+      if (kind === 'navy') return { bg: '#EEF2FA', fg: '#12295C', bd: '#D3DEF2' };
+      return { bg: '#F1F3F7', fg: '#5C6980', bd: '#DDE2EA' };
+    };
+
+    const cardView = (r) => {
+      const d = this.derive(r);
+      const fin = r.status === 'FINALIZADA';
+      let badge, c;
+      if (fin) { badge = 'Finalizada'; c = chip('neutral'); }
+      else if (d.resultado === 'COMPLETA') { badge = '✓ Completa'; c = chip('ok'); }
+      else if (d.resultado === 'EXCEDENTE') { badge = '⚠ Excedente'; c = chip('warn'); }
+      else { badge = 'Em conferência'; c = chip('navy'); }
+      const dono = this.state.db.users.find(u => u.id === r.usuarioId);
+      return {
+        id: r.id, nome: r.nome, dataFmt: fmtData(r.data), esperados: r.esperados, conferidos: d.conferidos,
+        badge, badgeBg: c.bg, badgeFg: c.fg, badgeBd: c.bd,
+        resultado: d.resultado === 'COMPLETA' ? '✓ Completa' : d.resultado === 'EXCEDENTE' ? '⚠ ' + d.excedentes + ' excedentes' : '⚠ ' + d.faltantes + ' faltantes',
+        barW: d.barra + '%',
+        barColor: d.resultado === 'EXCEDENTE' ? '#E3A008' : (d.resultado === 'COMPLETA' ? '#0B6B45' : '#12295C'),
+        dono: dono ? dono.nome : '—',
+        onOpen: () => this.setState({ screen: 'conf', rotaId: r.id, codigo: '', busca: '', fb: null }),
+        onExport: () => this.setState({ exp: this.exportTexto(r), expRotaId: r.id, copiado: false })
+      };
+    };
+
+    const totalEsp = minhas.reduce((a, r) => a + r.esperados, 0);
+    const totalConf = minhas.reduce((a, r) => a + r.pacotes.length, 0);
+    const totalFalt = minhas.reduce((a, r) => a + Math.max(r.esperados - r.pacotes.length, 0), 0);
+
+    let aviso = '';
+    if (logged && !admin) {
+      const dias = diasAte(me.assinaturaFim);
+      if (dias >= 0 && dias <= 5) aviso = 'Sua assinatura vence em ' + dias + ' dia(s).';
+    }
+
+    const assChip = assEstado === 'ATIVA' ? chip('ok') : assEstado === 'EXPIRADA' ? chip('err') : chip('neutral');
+
+    const tab = (id, label) => {
+      const on = s.screen === id;
+      return { label, bg: on ? '#12295C' : '#fff', fg: on ? '#fff' : '#12295C', bd: on ? '#12295C' : '#D9E0EA', onClick: () => this.setState({ screen: id }) };
+    };
+
+    const vals = {
+      offline: s.offline,
+      isLogin: screen === 'login', isBlocked: screen === 'blocked',
+      isDash: screen === 'dash', isNew: screen === 'new', isConf: screen === 'conf',
+      isHist: screen === 'hist', isPerfil: screen === 'perfil',
+      isADash: screen === 'adash', isAUsers: screen === 'ausers', isASubs: screen === 'asubs',
+      isARoutes: screen === 'aroutes', isAConfig: screen === 'aconfig',
+      adminArea: admin && ['adash', 'ausers', 'asubs', 'aroutes', 'aconfig'].indexOf(screen) >= 0,
+      appHeader: logged, isAdminUser: admin,
+      headerSub: logged ? me.nome + ' · ' + me.email : '',
+      navVisivel: !admin && ['dash', 'hist', 'perfil'].indexOf(screen) >= 0,
+      navInicio: screen === 'dash' ? '#12295C' : '#8792A6',
+      navHist: screen === 'hist' ? '#12295C' : '#8792A6',
+      navPerfil: screen === 'perfil' ? '#12295C' : '#8792A6',
+
+      email: s.email, senha: s.senha, loginErr: s.loginErr, loginBusy: s.loginBusy,
+      loginBtn: s.loginBusy ? 'Entrando...' : 'Entrar',
+      onEmail: e => this.setState({ email: e.target.value }),
+      onSenha: e => this.setState({ senha: e.target.value }),
+      onLoginKey: e => { if (e.key === 'Enter') this.doLogin(); },
+      onLogin: this.doLogin,
+      onLogout: () => this.setState({ userId: null, screen: 'login', senha: '', loginErr: '', rotaId: null }),
+
+      blockTitulo: logged && me.status === 'BLOQUEADO' ? '🔒 Usuário bloqueado' : 'Assinatura expirada',
+      blockTexto: logged && me.status === 'BLOQUEADO'
+        ? 'Seu acesso foi bloqueado pelo administrador. Procure o responsável pela sua conta para reativar.'
+        : 'Sua assinatura venceu em ' + (logged ? fmtData(me.assinaturaFim) : '') + '. Renove para voltar a usar a conferência de rotas.',
+
+      saudacao: logged ? (hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite') + ', ' + me.nome.split(' ')[0] : '',
+      hojeLongo: new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }),
+      avisoAssinatura: aviso,
+      sHoje: minhas.filter(r => r.data === hoje).length,
+      sEsp: totalEsp, sConf: totalConf, sFalt: totalFalt,
+      sFaltColor: totalFalt > 0 ? '#8A5A00' : '#12295C',
+      semRotas: minhas.length === 0, temRotas: minhas.length > 0,
+      recentes: minhas.slice(0, 4).map(cardView),
+
+      userNome: logged ? me.nome : '', userEmail: logged ? me.email : '',
+      assLabel: assEstado, assBg: assChip.bg, assFg: assChip.fg, assBd: assChip.bd,
+      assInicio: logged ? fmtData(me.assinaturaInicio) : '—',
+      assFim: logged ? fmtData(me.assinaturaFim) : '—',
+      assDias: logged ? (assEstado === 'EXPIRADA' ? 'Vencida há ' + Math.abs(diasAte(me.assinaturaFim)) + ' dia(s).' : diasAte(me.assinaturaFim) + ' dia(s) restantes.') : '',
+
+      onNovaRota: () => this.setState({ screen: 'new', eNome: '', eQtd: '', eData: '', fData: iso(new Date()) }),
+      goDash: () => this.setState({ screen: 'dash' }),
+      goHist: () => this.setState({ screen: 'hist' }),
+      goPerfil: () => this.setState({ screen: 'perfil' }),
+      goConferir: () => {
+        const emAndamento = minhas.find(r => r.status === 'EM_CONFERENCIA');
+        if (emAndamento) this.setState({ screen: 'conf', rotaId: emAndamento.id, codigo: '', busca: '', fb: null });
+        else this.setState({ screen: 'new', eNome: '', eQtd: '', eData: '' });
+      },
+      fNome: s.fNome, fQtd: s.fQtd, fData: s.fData, eNome: s.eNome, eQtd: s.eQtd, eData: s.eData,
+      criando: s.criando, criarBtn: s.criando ? 'Salvando...' : 'Criar rota',
+      onFNome: e => this.setState({ fNome: e.target.value, eNome: '' }),
+      onFQtd: e => this.setState({ fQtd: e.target.value, eQtd: '' }),
+      onFData: e => this.setState({ fData: e.target.value, eData: '' }),
+      onCriar: this.criar,
+
+      busca: s.busca, onBusca: e => this.setState({ busca: e.target.value }),
+      cCodigo: s.codigo, cParada: s.parada, codeRef: this.codeRef,
+      onCodigo: e => this.setState({ codigo: e.target.value }),
+      onParada: e => this.setState({ parada: e.target.value }),
+      onCodigoKey: e => { if (e.key === 'Enter') this.registrar(this.state.codigo); },
+      onAdd: () => this.registrar(this.state.codigo),
+      addBusy: s.addBusy, addBtn: s.addBusy ? '...' : 'Adicionar',
+
+      hRota: s.hRota, hData: s.hData, hStatus: s.hStatus,
+      onHRota: e => this.setState({ hRota: e.target.value }),
+      onHData: e => this.setState({ hData: e.target.value }),
+      onHStatus: e => this.setState({ hStatus: e.target.value }),
+
+      scanOpen: s.scanOpen,
+      scanFb: s.scanFb ? s.scanFb.msg : '', scanFbSub: s.scanFb ? (s.scanFb.sub || '') : '',
+      scanFbBg: s.scanFb ? (s.scanFb.tipo === 'ok' ? 'rgba(11,107,69,.25)' : s.scanFb.tipo === 'dup' ? 'rgba(255,221,0,.18)' : 'rgba(192,52,43,.2)') : 'transparent',
+      scanFbBd: s.scanFb ? (s.scanFb.tipo === 'ok' ? '#3FA97D' : s.scanFb.tipo === 'dup' ? '#FFDD00' : '#E07C74') : 'transparent',
+      scanFbFg: s.scanFb ? (s.scanFb.tipo === 'ok' ? '#9BE7C6' : s.scanFb.tipo === 'dup' ? '#FFE894' : '#FFC9C4') : '#fff',
+      onScan: () => this.setState({ scanOpen: true, scanFb: null }),
+      onScanClose: () => { this.setState({ scanOpen: false, scanFb: null }); this.focusCode(); },
+      toastMsg: s.toast, stop: e => e.stopPropagation(),
+
+      modalOpen: !!s.modal,
+      modalTitulo: s.modal ? s.modal.titulo : '',
+      modalTexto: s.modal ? s.modal.texto : '',
+      modalResumo: s.modal ? (s.modal.resumo || '') : '',
+      modalOkLabel: s.modal ? s.modal.ok : '',
+      modalCancelLabel: s.modal ? (s.modal.cancel || 'Cancelar') : '',
+      modalOkBg: s.modal ? (s.modal.okBg || '#FFDD00') : '#FFDD00',
+      modalOkFg: s.modal ? (s.modal.okFg || '#12295C') : '#12295C',
+      onModalCancel: () => this.setState({ modal: null }),
+      onModalBackdrop: () => this.setState({ modal: null }),
+      onModalOk: () => {
+        const m = s.modal;
+        if (!m) return;
+        if (m.tipo === 'remove') this.remover(m.pacoteId);
+        else if (m.tipo === 'finalize') this.finalizar();
+        else if (m.tipo === 'leave') this.setState({ modal: null, screen: 'dash' });
+        else if (m.tipo === 'delUser') {
+          const users = this.state.db.users.filter(u => u.id !== m.userId);
+          const routes = this.state.db.routes.filter(r => r.usuarioId !== m.userId);
+          this.persist(Object.assign({}, this.state.db, { users, routes }), { modal: null });
+          this.toast('Usuário excluído.');
+        } else if (m.tipo === 'toggleUser') {
+          const users = this.state.db.users.map(u => u.id === m.userId
+            ? Object.assign({}, u, { status: u.status === 'BLOQUEADO' ? 'ATIVO' : 'BLOQUEADO' }) : u);
+          this.saveUsers(users, { modal: null });
+          this.toast(m.bloquear ? 'Usuário bloqueado.' : 'Usuário desbloqueado.');
+        }
+      },
+
+      expOpen: !!s.exp, expTexto: s.exp || '',
+      copyLabel: s.copiado ? 'Copiado ✓' : 'Copiar texto',
+      onExpClose: () => this.setState({ exp: null, expRotaId: null, copiado: false }),
+      onExpCopy: () => {
+        const t = this.state.exp || '';
+        const done = () => { this.setState({ copiado: true }); setTimeout(() => this.setState({ copiado: false }), 1800); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(() => this.toast('Não foi possível copiar.'));
+        else this.toast('Não foi possível copiar.');
+      },
+      onExpDownload: () => {
+        const r = this.state.db.routes.find(x => x.id === this.state.expRotaId);
+        try {
+          const blob = new Blob([this.state.exp || ''], { type: 'text/plain;charset=utf-8' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'rota-' + (r ? r.nome : 'export') + '.txt';
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        } catch (e) { console.warn(e); this.toast('Não foi possível concluir esta operação. Tente novamente.'); }
+      },
+      onExpPdf: () => {
+        const r = this.state.db.routes.find(x => x.id === this.state.expRotaId);
+        if (r) this.exportPdf(r);
+      },
+
+      formOpen: !!s.form,
+      formTitulo: s.form ? (s.form.id ? 'Editar usuário' : 'Criar usuário') : '',
+      formErr: s.formErr, formBusy: s.formBusy,
+      formSaveLabel: s.formBusy ? 'Salvando...' : 'Salvar',
+      uNome: s.form ? s.form.nome : '', uEmail: s.form ? s.form.email : '',
+      uSenha: s.form ? s.form.senha : '', uTipo: s.form ? s.form.tipo : 'USUARIO',
+      uIni: s.form ? s.form.ini : '', uFim: s.form ? s.form.fim : '',
+      uSenhaLabel: s.form && s.form.id ? 'Nova senha (opcional)' : 'Senha',
+      onUNome: e => this.setState({ form: Object.assign({}, s.form, { nome: e.target.value }), formErr: '' }),
+      onUEmail: e => this.setState({ form: Object.assign({}, s.form, { email: e.target.value }), formErr: '' }),
+      onUSenha: e => this.setState({ form: Object.assign({}, s.form, { senha: e.target.value }), formErr: '' }),
+      onUTipo: e => this.setState({ form: Object.assign({}, s.form, { tipo: e.target.value }) }),
+      onUIni: e => this.setState({ form: Object.assign({}, s.form, { ini: e.target.value }) }),
+      onUFim: e => this.setState({ form: Object.assign({}, s.form, { fim: e.target.value }) }),
+      onFormCancel: () => this.setState({ form: null, formErr: '' }),
+      onFormSave: () => this.salvarUsuario(),
+
+      cfgMin: s.cfgMin, cfgMax: s.cfgMax,
+      onCfgMin: e => this.setState({ cfgMin: e.target.value }),
+      onCfgMax: e => this.setState({ cfgMax: e.target.value }),
+      onSalvarCfg: () => {
+        const mn = parseInt(s.cfgMin, 10), mx = parseInt(s.cfgMax, 10);
+        if (isNaN(mn) || isNaN(mx) || mn < 1 || mx < mn) return this.toast('Valores inválidos para o tamanho do código.');
+        this.persist(Object.assign({}, this.state.db, { config: { codigoMin: mn, codigoMax: mx } }));
+        this.toast('Configurações salvas.');
+      },
+
+      adminTabs: [tab('adash', 'Dashboard'), tab('ausers', 'Usuários'), tab('asubs', 'Assinaturas'), tab('aroutes', 'Rotas'), tab('aconfig', 'Configurações')]
+    };
+
+    // histórico filtrado
+    if (screen === 'hist') {
+      let lista = minhas.slice();
+      const termo = s.hRota.trim().toLowerCase();
+      if (termo) lista = lista.filter(r => r.nome.toLowerCase().indexOf(termo) >= 0);
+      if (s.hData) lista = lista.filter(r => r.data === s.hData);
+      if (s.hStatus !== 'TODOS') {
+        lista = lista.filter(r => {
+          const d = this.derive(r);
+          if (s.hStatus === 'EM_CONFERENCIA' || s.hStatus === 'FINALIZADA') return r.status === s.hStatus;
+          return d.resultado === s.hStatus;
+        });
+      }
+      vals.todas = lista.map(cardView);
+      vals.histVazio = lista.length === 0;
+      vals.histVazioMsg = minhas.length === 0 ? 'Nenhuma rota criada ainda.' : 'Nenhuma rota encontrada com esses filtros.';
+    }
+
+    // admin
+    if (vals.adminArea) {
+      const us = s.db.users;
+      const rts = s.db.routes;
+      vals.aStats = [
+        { label: 'Usuários ativos', valor: us.filter(u => u.status === 'ATIVO').length, color: '#12295C' },
+        { label: 'Usuários bloqueados', valor: us.filter(u => u.status === 'BLOQUEADO').length, color: '#B42318' },
+        { label: 'Assinaturas ativas', valor: us.filter(u => u.status !== 'BLOQUEADO' && diasAte(u.assinaturaFim) >= 0).length, color: '#0B6B45' },
+        { label: 'Assinaturas expiradas', valor: us.filter(u => diasAte(u.assinaturaFim) < 0).length, color: '#8A5A00' },
+        { label: 'Rotas realizadas', valor: rts.length, color: '#12295C' },
+        { label: 'Pacotes conferidos', valor: rts.reduce((a, r) => a + r.pacotes.length, 0), color: '#12295C' }
+      ];
+      vals.usuarios = us.map(u => {
+        const est = this.assinaturaEstado(u);
+        const st = u.status === 'BLOQUEADO' ? chip('err') : chip('ok');
+        const as = est === 'ATIVA' ? chip('ok') : est === 'EXPIRADA' ? chip('warn') : chip('neutral');
+        const rotasU = rts.filter(r => r.usuarioId === u.id);
+        return {
+          id: u.id, nome: u.nome, email: u.email,
+          tipo: u.tipo === 'ADMIN' ? 'Administrador' : 'Usuário',
+          statusLabel: u.status === 'BLOQUEADO' ? '🔒 Bloqueado' : 'Ativo',
+          stBg: st.bg, stFg: st.fg, stBd: st.bd,
+          assLabel: 'Assinatura ' + est.toLowerCase(), asBg: as.bg, asFg: as.fg, asBd: as.bd,
+          venc: fmtData(u.assinaturaFim), rotas: rotasU.length,
+          pacotes: rotasU.reduce((a, r) => a + r.pacotes.length, 0),
+          toggleLabel: u.status === 'BLOQUEADO' ? 'Desbloquear' : 'Bloquear',
+          onEdit: () => this.setState({ form: { id: u.id, nome: u.nome, email: u.email, senha: '', tipo: u.tipo, ini: u.assinaturaInicio, fim: u.assinaturaFim }, formErr: '' }),
+          onToggle: () => this.setState({
+            modal: {
+              tipo: 'toggleUser', userId: u.id, bloquear: u.status !== 'BLOQUEADO',
+              titulo: u.status === 'BLOQUEADO' ? 'Desbloquear ' + u.nome + '?' : 'Bloquear ' + u.nome + '?',
+              texto: u.status === 'BLOQUEADO' ? 'O usuário voltará a acessar o sistema.' : 'O usuário não conseguirá entrar no sistema até ser desbloqueado.',
+              ok: u.status === 'BLOQUEADO' ? 'Desbloquear' : 'Bloquear',
+              okBg: u.status === 'BLOQUEADO' ? '#FFDD00' : '#C0342B', okFg: u.status === 'BLOQUEADO' ? '#12295C' : '#fff'
+            }
+          }),
+          onDelete: () => this.setState({
+            modal: {
+              tipo: 'delUser', userId: u.id, titulo: 'Tem certeza que deseja excluir este usuário?',
+              texto: 'Essa ação não poderá ser desfeita.',
+              resumo: u.nome + '\n' + u.email + '\n' + rotasU.length + ' rota(s) serão removidas',
+              ok: 'Excluir usuário', okBg: '#C0342B', okFg: '#fff'
+            }
+          })
+        };
+      });
+      vals.assinaturas = us.map(u => {
+        const est = this.assinaturaEstado(u);
+        const c = est === 'ATIVA' ? chip('ok') : est === 'EXPIRADA' ? chip('warn') : chip('neutral');
+        const dias = diasAte(u.assinaturaFim);
+        return {
+          nome: u.nome, email: u.email, label: est, bg: c.bg, fg: c.fg, bd: c.bd,
+          inicio: fmtData(u.assinaturaInicio), fim: fmtData(u.assinaturaFim),
+          dias: dias < 0 ? '—' : String(dias),
+          diasColor: dias < 0 ? '#B42318' : dias <= 5 ? '#8A5A00' : '#0F1B33',
+          onRenovar: () => {
+            const base = dias < 0 ? new Date() : new Date(u.assinaturaFim + 'T12:00:00');
+            const users = this.state.db.users.map(x => x.id === u.id ? Object.assign({}, x, { assinaturaFim: iso(addDays(base, 30)) }) : x);
+            this.saveUsers(users);
+            this.toast('Assinatura de ' + u.nome + ' renovada.');
+          },
+          onEdit: () => this.setState({ form: { id: u.id, nome: u.nome, email: u.email, senha: '', tipo: u.tipo, ini: u.assinaturaInicio, fim: u.assinaturaFim }, formErr: '' })
+        };
+      });
+      vals.rotasAdmin = rts.map(cardView);
+      vals.semRotasAdmin = rts.length === 0;
+      vals.onNovoUsuario = () => this.setState({
+        form: { id: null, nome: '', email: '', senha: '', tipo: 'USUARIO', ini: iso(new Date()), fim: iso(addDays(new Date(), 30)) }, formErr: ''
+      });
+    }
+
+    const r = this.rota();
+    if (screen === 'conf' && r) {
+      const d = this.derive(r);
+      const fin = r.status === 'FINALIZADA';
+      let badge, c;
+      if (fin) { badge = 'FINALIZADA'; c = chip('neutral'); }
+      else if (d.resultado === 'COMPLETA') { badge = '✓ Conferência completa'; c = chip('ok'); }
+      else if (d.resultado === 'EXCEDENTE') { badge = '⚠ Conferência com excedente'; c = chip('warn'); }
+      else { badge = 'Em conferência'; c = chip('navy'); }
+
+      const termo = s.busca.trim();
+      const itens = [];
+      r.pacotes.forEach((p, i) => {
+        const seq = i + 1;
+        if (termo && p.codigo.indexOf(termo) === -1) return;
+        itens.push({
+          id: p.id, seq, codigo: p.codigo, hora: fmtHora(p.horario), parada: p.paradaId || '',
+          isExc: seq > r.esperados, removivel: !fin,
+          onRemove: () => this.setState({
+            modal: {
+              tipo: 'remove', pacoteId: p.id, titulo: 'Remover este pacote?',
+              texto: 'Essa ação irá atualizar a quantidade conferida da rota.',
+              resumo: 'Pacote ' + seq + '\n' + p.codigo + '  ·  ' + fmtHora(p.horario),
+              ok: 'Remover', okBg: '#C0342B', okFg: '#fff'
+            }
+          })
+        });
+      });
+      itens.reverse();
+
+      const fbMap = {
+        ok: { bg: '#E6F6EE', bd: '#BFE6D4', fg: '#0B6B45' },
+        dup: { bg: '#FFF6C2', bd: '#FFE27A', fg: '#6B4E00' },
+        err: { bg: '#FEF3F2', bd: '#FECDCA', fg: '#B42318' }
+      };
+      const fbc = s.fb ? fbMap[s.fb.tipo] : null;
+
+      Object.assign(vals, {
+        cNome: r.nome, cDataFmt: fmtData(r.data),
+        cEsp: r.esperados, cConf: d.conferidos, cFalt: d.faltantes, cExc: d.excedentes,
+        cFaltColor: d.faltantes > 0 ? '#8A5A00' : '#98A2B3',
+        cExcColor: d.excedentes > 0 ? '#8A5A00' : '#98A2B3',
+        cRatio: d.conferidos + ' / ' + r.esperados,
+        cPctLabel: d.pct + '% conferido',
+        cBarW: d.barra + '%',
+        cBarColor: d.resultado === 'EXCEDENTE' ? '#E3A008' : (d.resultado === 'COMPLETA' ? '#0B6B45' : '#12295C'),
+        cExcAviso: d.excedentes > 0 ? '+' + d.excedentes + ' excedentes acima do esperado' : '',
+        cBadge: badge, cBadgeBg: c.bg, cBadgeFg: c.fg, cBadgeBd: c.bd,
+        cAtiva: !fin, cFinalizada: fin,
+        cCompleta: !fin && d.resultado === 'COMPLETA',
+        cCompletaTexto: d.conferidos + ' de ' + r.esperados + ' pacotes conferidos. Você pode continuar conferindo ou finalizar a rota.',
+        cFinalTexto: 'Resultado: ' + (d.resultado === 'COMPLETA' ? 'conferência completa'
+          : d.resultado === 'EXCEDENTE' ? d.excedentes + ' pacote(s) excedente(s)'
+          : d.faltantes + ' pacote(s) faltante(s)') + '. Disponível para consulta e exportação.',
+        cListaInfo: termo ? itens.length + ' de ' + d.conferidos : d.conferidos + ' registrados',
+        pacotes: itens,
+        listaVazia: itens.length === 0,
+        listaVaziaMsg: termo ? 'Nenhum pacote encontrado.' : 'Nenhum pacote conferido ainda. Escaneie ou digite o primeiro código.',
+        fbMsg: s.fb ? s.fb.msg : '', fbSub: s.fb ? (s.fb.sub || '') : '',
+        fbBg: fbc ? fbc.bg : '#fff', fbBd: fbc ? fbc.bd : '#E2E7EF', fbFg: fbc ? fbc.fg : '#0F1B33',
+        onExportar: () => this.setState({ exp: this.exportTexto(r), expRotaId: r.id, copiado: false }),
+        onSair: () => {
+          if (!fin) {
+            this.setState({
+              modal: {
+                tipo: 'leave', titulo: 'Você possui uma conferência em andamento.',
+                texto: 'Deseja sair? A rota e os pacotes já conferidos permanecem salvos.',
+                resumo: r.esperados + ' esperados\n' + d.conferidos + ' conferidos\n' + d.faltantes + ' faltantes\n' + d.excedentes + ' excedentes',
+                ok: 'Sair', cancel: 'Continuar conferência', okBg: '#EEF2FA', okFg: '#12295C'
+              }
+            });
+          } else this.setState({ screen: 'dash' });
+        },
+        onFinalizarAsk: () => {
+          let texto;
+          if (d.faltantes > 0) texto = 'Ainda existem ' + d.faltantes + ' pacotes faltantes. Deseja finalizar mesmo assim?';
+          else if (d.excedentes > 0) texto = 'Existem ' + d.excedentes + ' pacotes acima do esperado. Deseja finalizar esta rota?';
+          else texto = 'Conferência completa. Deseja finalizar esta rota?';
+          this.setState({
+            modal: {
+              tipo: 'finalize', titulo: 'Finalizar rota ' + r.nome + '?', texto,
+              resumo: r.esperados + ' esperados\n' + d.conferidos + ' conferidos\n' + d.faltantes + ' faltantes\n' + d.excedentes + ' excedentes',
+              ok: 'Finalizar', okBg: '#FFDD00', okFg: '#12295C'
+            }
+          });
+        }
+      });
+    }
+    return vals;
+  }
+}
+
+</script>
 </body>
 </html>
