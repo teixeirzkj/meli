@@ -81,6 +81,40 @@ não tem atalho: as ações passam pelas mesmas policies.
 apaga. Administrador nunca é barrado por assinatura, senão ninguém conseguiria
 reativar ninguém.
 
+## Instalar como aplicativo (PWA)
+
+O app é instalável: ícone na tela inicial, tela cheia sem barra de navegador e
+atalhos para "Nova rota" e "Histórico".
+
+- **Android/Chrome** — aparece o botão *Instalar aplicativo* em `/perfil`, ou o
+  próprio navegador oferece a instalação.
+- **iPhone/Safari** — Compartilhar → *Adicionar à Tela de Início* (o iOS não
+  expõe convite automático; `/perfil` mostra a instrução).
+
+Peças: [app/manifest.ts](app/manifest.ts), [public/sw.js](public/sw.js),
+[components/BotaoInstalar.tsx](components/BotaoInstalar.tsx) e os ícones em
+`public/icons` (inclusive os *maskable*, com a arte nos 80% centrais, que é o
+que o Android recorta).
+
+O service worker é deliberadamente pequeno: **navegação nunca sai do cache** —
+HTML servido de cache é o bug que aparece como "não atualizou" na mão do
+usuário. Só ficam em cache os assets de `/_next/static` (nome com hash, muda a
+cada build) e a página de offline.
+
+Esses arquivos precisam ficar **fora do matcher do middleware**: o navegador os
+busca fora do contexto de navegação e, se levarem redirect para `/login`, o app
+não fica instalável.
+
+### Levar para a Play Store
+
+O PWA é o pré-requisito. Com ele pronto, [PWABuilder](https://www.pwabuilder.com)
+ou [Bubblewrap](https://github.com/GoogleChromeLabs/bubblewrap) empacotam o site
+numa Trusted Web Activity — um app Android que abre o site sem barra de
+navegador. Exige conta de desenvolvedor Google (US$ 25, pagamento único) e o
+arquivo `.well-known/assetlinks.json` no domínio, gerado pela própria
+ferramenta. A App Store cobra US$ 99/ano e costuma recusar app que é só um site
+embrulhado — para iPhone, o "Adicionar à Tela de Início" resolve sem loja.
+
 ## Limpeza automática de rotas
 
 Rota antiga é apagada sozinha, com os pacotes dela junto (`on delete cascade`).

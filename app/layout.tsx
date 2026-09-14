@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { RegistrarSW } from "@/components/RegistrarSW";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -23,7 +24,20 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Rotas",
   description: "Conferência de rotas e pacotes",
-  icons: { icon: "/logo-rotas.png" },
+  applicationName: "Rotas",
+  // Ícone leve: o logo original tem 1 MB e era baixado em toda visita.
+  icons: {
+    icon: [
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Rotas",
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {
@@ -41,6 +55,7 @@ export default function RootLayout({
         className={`${spaceGrotesk.variable} ${plexSans.variable} ${plexMono.variable} font-sans antialiased`}
       >
         {children}
+        <RegistrarSW />
       </body>
     </html>
   );

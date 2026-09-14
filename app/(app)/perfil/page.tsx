@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { getSessao } from "@/lib/auth";
 import { diasRestantes, formatData } from "@/lib/format";
+import { BotaoInstalar } from "@/components/BotaoInstalar";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +88,8 @@ export default async function PerfilPage() {
           </div>
         </dl>
       </section>
+
+      <BotaoInstalar />
 
       <form action="/auth/signout" method="post">
         <button
