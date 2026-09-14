@@ -81,7 +81,7 @@ reativar ninguém.
 
 ## Leitura de código de barras
 
-O botão **Escanear com a câmera** em  abre a câmera traseira e lê em
+O botão **Escanear com a câmera** em `/rotas/[id]` abre a câmera traseira e lê em
 sequência, sem fechar entre um pacote e outro: cada leitura dá bipe e vibração, e as
 últimas aparecem na própria tela da câmera.
 
@@ -89,7 +89,7 @@ Dois motores, escolhidos em tempo de execução ([components/Scanner.tsx](compon
 
 1. **BarcodeDetector** — API nativa do navegador (Chrome no Android). Custo zero de
    JavaScript e a leitura mais rápida.
-2. **ZXing** — entra por  dinâmico só quando a API nativa não existe (iPhone,
+2. **ZXing** — entra por `import()` dinâmico só quando a API nativa não existe (iPhone,
    Safari). Fica fora do carregamento inicial da página.
 
 Formatos: Code 128, Code 39/93, Codabar, EAN-8/13, ITF, UPC-A/E, QR e Data Matrix.
@@ -106,8 +106,9 @@ Cada navegação chegava a abrir quatro idas em série ao Supabase. O que mudou:
   ([lib/auth.ts](lib/auth.ts)) — layout, página e actions compartilham a mesma leitura.
 - Cada rota tem `loading.tsx`, então o esqueleto aparece no clique.
 - O login não carrega Framer Motion (economiza ~40 kB na primeira tela) e é
-  renderizado no servidor —  deixava a tela em branco até hidratar.
-- O id do usuário sai do próprio cookie em vez de uma chamada a   ([lib/supabase/sessao-cookie.ts](lib/supabase/sessao-cookie.ts)). Quem valida o
+  renderizado no servidor — `useSearchParams` deixava a tela em branco até hidratar.
+- O id do usuário sai do próprio cookie em vez de uma chamada a `/auth/v1/user`
+  ([lib/supabase/sessao-cookie.ts](lib/supabase/sessao-cookie.ts)). Quem valida o
   token continua sendo o Postgres, via RLS.
 - As consultas da tela de conferência vão em paralelo.
 
