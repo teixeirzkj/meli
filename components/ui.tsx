@@ -85,22 +85,34 @@ export function Dialogo({
 }) {
   const caixaRef = useRef<HTMLDivElement>(null);
 
+  // onFechar chega como arrow function nova a cada render do pai. Se ela
+  // entrasse nas dependências do efeito abaixo, cada tecla digitada rodaria o
+  // efeito de novo e roubaria o foco do campo — daí o "tem que clicar a cada
+  // letra". A ref mantém o handler atual sem virar dependência.
+  const fecharRef = useRef(onFechar);
+  fecharRef.current = onFechar;
+
   useEffect(() => {
     if (!aberto) return;
 
     function onTecla(e: KeyboardEvent) {
-      if (e.key === "Escape") onFechar();
+      if (e.key === "Escape") fecharRef.current();
     }
 
     document.addEventListener("keydown", onTecla);
-    caixaRef.current?.focus();
     document.body.style.overflow = "hidden";
+
+    // Foco vai para o primeiro campo, uma vez só, na abertura.
+    const primeiro = caixaRef.current?.querySelector<HTMLElement>(
+      "input:not([type=hidden]), select, textarea",
+    );
+    (primeiro ?? caixaRef.current)?.focus();
 
     return () => {
       document.removeEventListener("keydown", onTecla);
       document.body.style.overflow = "";
     };
-  }, [aberto, onFechar]);
+  }, [aberto]);
 
   return (
     <AnimatePresence>
