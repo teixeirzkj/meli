@@ -13,15 +13,10 @@ export default async function RotaPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: rota } = await supabase
-    .from("rotas")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle<Rota>();
-
-  if (!rota) notFound();
-
-  const [{ data: pacotes }, { data: config }] = await Promise.all([
+  // As três consultas são independentes (pacotes já filtra pelo id da URL):
+  // em série, cada navegação somava três idas ao banco.
+  const [{ data: rota }, { data: pacotes }, { data: config }] = await Promise.all([
+    supabase.from("rotas").select("*").eq("id", id).maybeSingle<Rota>(),
     supabase
       .from("pacotes")
       .select("*")
@@ -29,6 +24,8 @@ export default async function RotaPage({
       .order("created_at", { ascending: false }),
     supabase.from("app_config").select("*").eq("id", true).maybeSingle<AppConfig>(),
   ]);
+
+  if (!rota) notFound();
 
   return (
     <Conferencia

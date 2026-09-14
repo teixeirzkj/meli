@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, envConfigurado } from "./env";
+import { cookiesDeSessao, lerSessaoDoCookie } from "./sessao-cookie";
 
 const PUBLIC_PATHS = ["/login", "/auth"];
 
@@ -24,15 +25,17 @@ export async function updateSession(request: NextRequest) {
 async function rotear(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
-  const cookies = cookiesDeSessao(request);
 
-  if (cookies.length === 0) {
+  if (cookiesDeSessao(request.cookies.getAll()).length === 0) {
     return isPublic ? NextResponse.next({ request }) : paraLogin(request, pathname);
   }
 
   // Token ainda válido: decide a rota sem nenhuma ida à rede. É o caminho de
-  // 99% das requisições — inclusive os prefetch que o Next dispara sozinho.
-  if (!precisaRenovar(cookies)) {
+  // quase toda requisição — inclusive os prefetch que o Next dispara sozinho.
+  const sessao = lerSessaoDoCookie(request.cookies.getAll());
+  const precisaRenovar = !sessao || sessao.expiraEm - Date.now() < MARGEM_RENOVACAO;
+
+  if (!precisaRenovar) {
     if (pathname === "/login") return paraInicio(request);
     return NextResponse.next({ request });
   }
@@ -67,39 +70,6 @@ async function renovarSessao(request: NextRequest, pathname: string, isPublic: b
   if (user && pathname === "/login") return paraInicio(request);
 
   return response;
-}
-
-function cookiesDeSessao(request: NextRequest) {
-  return request.cookies
-    .getAll()
-    .filter((c) => /^sb-.+-auth-token(\.\d+)?$/.test(c.name))
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-/**
- * Lê o exp do access token direto do cookie. Não é validação de assinatura —
- * é só para saber se vale a pena gastar uma chamada de rede renovando.
- * Qualquer surpresa no formato cai no true e segue o caminho seguro.
- */
-function precisaRenovar(cookies: { value: string }[]): boolean {
-  try {
-    // O @supabase/ssr grava "base64-" + base64url(JSON), quebrado em pedaços
-    // .0/.1 quando passa do tamanho de um cookie.
-    let bruto = cookies.map((c) => c.value).join("");
-    if (bruto.startsWith("base64-")) bruto = base64UrlDecode(bruto.slice(7));
-
-    const { access_token } = JSON.parse(bruto);
-    const payload = JSON.parse(base64UrlDecode(access_token.split(".")[1]));
-
-    return payload.exp * 1000 - Date.now() < MARGEM_RENOVACAO;
-  } catch {
-    return true;
-  }
-}
-
-function base64UrlDecode(valor: string): string {
-  const base64 = valor.replace(/-/g, "+").replace(/_/g, "/");
-  return atob(base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "="));
 }
 
 function paraLogin(request: NextRequest, pathname: string) {

@@ -9,12 +9,12 @@ import type { Rota } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const { supabase, user } = (await getSessao())!;
+  const { supabase, userId } = (await getSessao())!;
 
   const { data: rotas } = await supabase
     .from("rotas")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .order("data_rota", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(20);

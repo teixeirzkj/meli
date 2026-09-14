@@ -97,7 +97,7 @@ export async function excluirUsuario(userId: string): Promise<Resultado> {
   try {
     const sessao = await exigirAdmin();
 
-    if (sessao.user.id === userId)
+    if (sessao.userId === userId)
       return { ok: false, erro: "Você não pode excluir a própria conta." };
 
     const admin = createAdminClient();
@@ -119,7 +119,7 @@ export async function definirStatus(
   try {
     const sessao = await exigirAdmin();
 
-    if (sessao.user.id === userId && status !== "ativo")
+    if (sessao.userId === userId && status !== "ativo")
       return { ok: false, erro: "Você não pode suspender ou bloquear a própria conta." };
 
     const { error } = await sessao.supabase
@@ -140,7 +140,7 @@ export async function definirTipo(userId: string, tipo: Tipo): Promise<Resultado
   try {
     const sessao = await exigirAdmin();
 
-    if (sessao.user.id === userId && tipo !== "admin")
+    if (sessao.userId === userId && tipo !== "admin")
       return { ok: false, erro: "Você perderia o acesso ao painel — peça a outro admin." };
 
     const { error } = await sessao.supabase
@@ -211,7 +211,7 @@ export async function registrarPagamento(dados: {
       competencia: primeiroDiaDoMes(dados.competencia),
       metodo: dados.metodo,
       observacao: dados.observacao?.trim() || null,
-      registrado_por: sessao.user.id,
+      registrado_por: sessao.userId,
     });
 
     if (error) return falha(error.message);

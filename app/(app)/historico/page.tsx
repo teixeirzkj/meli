@@ -24,12 +24,12 @@ export default async function HistoricoPage({
   searchParams: Promise<{ status?: string; resultado?: string }>;
 }) {
   const { status = "todos", resultado = "todos" } = await searchParams;
-  const { supabase, user } = (await getSessao())!;
+  const { supabase, userId } = (await getSessao())!;
 
   let query = supabase
     .from("rotas")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .order("data_rota", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(100);

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getSessao } from "@/lib/auth";
 import { hoje } from "@/lib/format";
+import { BotaoSubmit } from "@/components/BotaoSubmit";
 
 export default async function NovaRotaPage({
   searchParams,
@@ -21,19 +22,19 @@ export default async function NovaRotaPage({
       redirect("/rotas/nova?erro=Preencha+todos+os+campos+corretamente.");
     }
 
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const sessao = await getSessao();
+    if (!sessao) redirect("/login");
 
-    const { data: rota, error } = await supabase
+    const { data: rota, error } = await sessao.supabase
       .from("rotas")
-      .insert({ user_id: user!.id, nome, qtd_esperada: qtd, data_rota: data })
+      .insert({ user_id: sessao.userId, nome, qtd_esperada: qtd, data_rota: data })
       .select("id")
       .single();
 
     if (error || !rota) {
-      redirect(`/rotas/nova?erro=${encodeURIComponent(error?.message ?? "Erro ao criar a rota.")}`);
+      redirect(
+        `/rotas/nova?erro=${encodeURIComponent(error?.message ?? "Erro ao criar a rota.")}`,
+      );
     }
 
     redirect(`/rotas/${rota.id}`);
@@ -54,6 +55,7 @@ export default async function NovaRotaPage({
             name="nome"
             required
             maxLength={80}
+            autoFocus
             placeholder="Ex.: Rota 42 — Centro"
             className="rounded-xl border border-line bg-surface-alt px-3.5 py-3 text-[15px] outline-none focus:border-navy"
           />
@@ -89,12 +91,7 @@ export default async function NovaRotaPage({
           </p>
         )}
 
-        <button
-          type="submit"
-          className="rounded-xl bg-yellow px-4 py-3.5 font-display text-[15px] font-bold text-navy-ink transition hover:bg-yellow-soft"
-        >
-          Criar rota
-        </button>
+        <BotaoSubmit pendenteLabel="Criando rota…">Criar rota</BotaoSubmit>
       </form>
     </div>
   );

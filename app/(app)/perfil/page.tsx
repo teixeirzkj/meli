@@ -1,8 +1,6 @@
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
 import { getSessao } from "@/lib/auth";
 import { diasRestantes, formatData } from "@/lib/format";
-import type { Profile } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +16,10 @@ export default async function PerfilPage() {
     const nome = String(formData.get("nome") ?? "").trim();
     if (!nome) return;
 
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const sessao = await getSessao();
+    if (!sessao) return;
 
-    await supabase.from("profiles").update({ nome }).eq("id", user!.id);
+    await sessao.supabase.from("profiles").update({ nome }).eq("id", sessao.userId);
     revalidatePath("/perfil");
   }
 

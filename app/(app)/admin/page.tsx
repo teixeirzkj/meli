@@ -102,7 +102,7 @@ export default async function AdminPage() {
       rotas={listaRotas}
       faturamento={faturamento}
       config={config ?? { id: true, codigo_min_digitos: 4, codigo_max_digitos: 20, updated_at: "" }}
-      meuId={sessao.user.id}
+      meuId={sessao.userId}
       podeCriarConta={temServiceRole()}
       // A tabela de pagamentos vem da migration 0002; sem ela o painel abre
       // igual, só sem o módulo financeiro.

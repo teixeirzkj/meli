@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatData, resumoRota } from "@/lib/format";
 import { Stat } from "@/components/Stat";
+import { Scanner } from "@/components/Scanner";
 import type { AppConfig, Pacote, Rota } from "@/lib/types";
 
-type Feedback = { tom: "ok" | "erro" | "alerta"; msg: string; sub?: string };
+type Tom = "ok" | "erro" | "alerta";
+type Feedback = { tom: Tom; msg: string; sub?: string };
 
 export function Conferencia({
   rota: rotaInicial,
@@ -30,6 +32,7 @@ export function Conferencia({
   const [busca, setBusca] = useState("");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [modalFinalizar, setModalFinalizar] = useState(false);
+  const [scannerAberto, setScannerAberto] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
   const finalizada = rota.status === "finalizada";
@@ -40,30 +43,29 @@ export function Conferencia({
     ? pacotes.filter((p) => p.codigo.toLowerCase().includes(busca.trim().toLowerCase()))
     : pacotes;
 
-  async function adicionar(e: React.FormEvent) {
-    e.preventDefault();
-    if (finalizada || salvando) return;
+  /**
+   * Um caminho só para o código, venha do teclado ou da câmera. Devolve o
+   * resultado para o scanner mostrar sem precisar fechar.
+   */
+  async function registrar(valor: string): Promise<{ tom: Tom; msg: string }> {
+    if (finalizada) return { tom: "erro", msg: "rota finalizada" };
 
-    const valor = codigo.trim();
     const { codigo_min_digitos: min, codigo_max_digitos: max } = config;
 
     if (valor.length < min || valor.length > max) {
-      return avisar({
+      return {
         tom: "erro",
-        msg: "Código inválido",
-        sub: min === max ? `Use ${min} caracteres.` : `Use de ${min} a ${max} caracteres.`,
-      });
+        msg: min === max ? `use ${min} caracteres` : `use de ${min} a ${max} caracteres`,
+      };
     }
 
     if (pacotes.some((p) => p.codigo === valor)) {
-      return avisar({ tom: "alerta", msg: "Já conferido", sub: valor });
+      return { tom: "alerta", msg: "já conferido" };
     }
 
     // Passou da quantidade esperada: entra como excedente, não some do relatório.
-    const validos = pacotes.length - excedentes;
-    const isExcedente = validos >= rota.qtd_esperada;
+    const isExcedente = pacotes.length - excedentes >= rota.qtd_esperada;
 
-    setSalvando(true);
     const { data, error } = await supabase
       .from("pacotes")
       .insert({
@@ -75,21 +77,42 @@ export function Conferencia({
       })
       .select("*")
       .single<Pacote>();
-    setSalvando(false);
 
     if (error || !data) {
-      return avisar({ tom: "erro", msg: "Não salvou", sub: error?.message });
+      return { tom: "erro", msg: error?.message ?? "não salvou" };
     }
 
     setPacotes((atual) => [data, ...atual]);
-    setCodigo("");
-    inputRef.current?.focus();
-    avisar(
-      isExcedente
-        ? { tom: "alerta", msg: "Excedente registrado", sub: valor }
-        : { tom: "ok", msg: "Pacote conferido", sub: valor },
-    );
     router.refresh();
+
+    return isExcedente
+      ? { tom: "alerta", msg: "excedente" }
+      : { tom: "ok", msg: "conferido" };
+  }
+
+  async function adicionar(e: React.FormEvent) {
+    e.preventDefault();
+    if (finalizada || salvando) return;
+
+    const valor = codigo.trim();
+    if (!valor) return;
+
+    setSalvando(true);
+    const r = await registrar(valor);
+    setSalvando(false);
+
+    if (r.tom === "ok") setCodigo("");
+    inputRef.current?.focus();
+    avisar({
+      tom: r.tom,
+      msg:
+        r.tom === "ok"
+          ? "Pacote conferido"
+          : r.tom === "alerta"
+            ? "Atenção"
+            : "Não registrado",
+      sub: `${valor} — ${r.msg}`,
+    });
   }
 
   async function remover(pacote: Pacote) {
@@ -206,39 +229,64 @@ export function Conferencia({
           Esta rota já foi finalizada.
         </p>
       ) : (
-        <form onSubmit={adicionar} className="card flex flex-col gap-3 p-4">
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[13px] font-semibold text-navy-ink">Código do pacote</span>
-            <input
-              ref={inputRef}
-              value={codigo}
-              onChange={(e) => setCodigo(e.target.value)}
-              autoFocus
-              autoComplete="off"
-              placeholder="Bipe ou digite o código"
-              className="rounded-xl border border-line bg-surface-alt px-3.5 py-3 font-mono text-[15px] outline-none focus:border-navy"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[13px] font-semibold text-navy-ink">Parada (opcional)</span>
-            <input
-              value={parada}
-              onChange={(e) => setParada(e.target.value)}
-              autoComplete="off"
-              placeholder="Ex.: 12"
-              className="rounded-xl border border-line bg-surface-alt px-3.5 py-3 text-[15px] outline-none focus:border-navy"
-            />
-          </label>
-
+        <>
           <button
-            type="submit"
-            disabled={salvando}
-            className="rounded-xl bg-yellow px-4 py-3.5 font-display text-[15px] font-bold text-navy-ink transition hover:bg-yellow-soft disabled:opacity-60"
+            onClick={() => setScannerAberto(true)}
+            className="flex items-center justify-center gap-2.5 rounded-xl bg-navy px-4 py-4 font-display text-[15px] font-bold text-white transition hover:bg-navy-soft"
           >
-            Conferir pacote
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.9"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
+              <path d="M7 8v8M10.5 8v8M14 8v8M17 8v8" />
+            </svg>
+            Escanear com a câmera
           </button>
-        </form>
+
+          <form onSubmit={adicionar} className="card flex flex-col gap-3 p-4">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[13px] font-semibold text-navy-ink">
+                Código do pacote
+              </span>
+              <input
+                ref={inputRef}
+                value={codigo}
+                onChange={(e) => setCodigo(e.target.value)}
+                autoComplete="off"
+                placeholder="Bipe, escaneie ou digite"
+                className="rounded-xl border border-line bg-surface-alt px-3.5 py-3 font-mono text-[15px] outline-none focus:border-navy"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[13px] font-semibold text-navy-ink">
+                Parada (opcional)
+              </span>
+              <input
+                value={parada}
+                onChange={(e) => setParada(e.target.value)}
+                autoComplete="off"
+                placeholder="Ex.: 12"
+                className="rounded-xl border border-line bg-surface-alt px-3.5 py-3 text-[15px] outline-none focus:border-navy"
+              />
+            </label>
+
+            <button
+              type="submit"
+              disabled={salvando}
+              className="rounded-xl bg-yellow px-4 py-3.5 font-display text-[15px] font-bold text-navy-ink transition hover:bg-yellow-soft disabled:opacity-60"
+            >
+              {salvando ? "Salvando…" : "Conferir pacote"}
+            </button>
+          </form>
+        </>
       )}
 
       <div className="flex gap-2">
@@ -309,6 +357,16 @@ export function Conferencia({
           )}
         </ul>
       </section>
+
+      <Scanner
+        aberto={scannerAberto}
+        onFechar={() => setScannerAberto(false)}
+        onCodigo={registrar}
+        onDigitar={() => {
+          setScannerAberto(false);
+          window.setTimeout(() => inputRef.current?.focus(), 80);
+        }}
+      />
 
       {modalFinalizar && (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-4 sm:items-center">
