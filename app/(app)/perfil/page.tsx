@@ -1,21 +1,14 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getSessao } from "@/lib/auth";
 import { diasRestantes, formatData } from "@/lib/format";
 import type { Profile } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function PerfilPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user!.id)
-    .single<Profile>();
+  const sessao = await getSessao();
+  const profile = sessao?.profile;
 
   if (!profile) return null;
 

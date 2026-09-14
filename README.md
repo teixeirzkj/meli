@@ -1,85 +1,102 @@
 # Rotas — conferência de rotas e pacotes
 
 App mobile-first em Next.js 15 (App Router) + Supabase (Auth + Postgres com RLS).
-A raiz do site é a tela de login; depois de autenticado o usuário cai no painel de rotas.
+A raiz do site é a tela de login; não existe autocadastro — a contratação passa
+pelo WhatsApp e a conta é criada no painel administrativo.
 
 ## Stack
 
 - **Next.js 15** / React 19 / TypeScript
 - **Tailwind CSS 4** (tokens de cor em [app/globals.css](app/globals.css))
-- **Supabase** — `@supabase/ssr` com sessão em cookie, renovada no [middleware.ts](middleware.ts)
+- **Framer Motion** no painel admin (transições de aba, diálogos, gráfico)
+- **Supabase** — `@supabase/ssr` com sessão em cookie
 
 ## Rodar localmente
 
 ```bash
 npm install
-cp .env.example .env.local   # preencha com a URL e a anon key do projeto
+cp .env.example .env.local   # preencha com as chaves do projeto
 npm run dev
 ```
 
-Abre em http://localhost:3000.
-
 ### Variáveis de ambiente
 
-| Variável | Onde achar |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → Data API |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API Keys |
+| Variável | Para quê | Onde vive |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | endereço do projeto | build + navegador |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | acesso do usuário logado, sob RLS | build + navegador |
+| `SUPABASE_SERVICE_ROLE_KEY` | criar e excluir contas no Auth | **só no servidor** |
 
-A **service_role key não é usada por este app** e não deve entrar no `.env`, no
-repositório nem em nenhuma variável `NEXT_PUBLIC_*` — ela ignora RLS e dá acesso
-total ao banco.
+A `service_role` ignora RLS: ela não tem prefixo `NEXT_PUBLIC_`, nunca entra no
+bundle e só é usada dentro de server actions, depois de confirmar que quem
+chamou é administrador ([lib/supabase/admin.ts](lib/supabase/admin.ts)). Sem ela o
+app funciona inteiro — só o botão de criar conta fica desligado.
 
 ## Banco de dados
 
-Antes do primeiro login, rode a migration no Supabase
-(**SQL Editor → New query → colar → Run**):
+Rode as migrations no Supabase (**SQL Editor → New query → colar → Run**), na ordem:
 
-1. [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql) — tabelas, trigger e RLS
-2. [supabase/seed.sql](supabase/seed.sql) — opcional, promove um e-mail a administrador
-
-### Modelo
+1. [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql) — profiles, rotas, pacotes, config, RLS
+2. [supabase/migrations/0002_pagamentos_status.sql](supabase/migrations/0002_pagamentos_status.sql) — pagamentos e situação da conta
+3. [supabase/seed.sql](supabase/seed.sql) — cria profile de quem já existia e promove o dono a admin
 
 | Tabela | O que guarda |
 |---|---|
-| `profiles` | nome, tipo (`user`/`admin`) e janela da assinatura; criada por trigger no cadastro |
-| `rotas` | nome, quantidade esperada, data e status (`em_conferencia`/`finalizada`) |
+| `profiles` | nome, tipo (`user`/`admin`), status (`ativo`/`suspenso`/`bloqueado`), janela da assinatura |
+| `rotas` | nome, quantidade esperada, data e status da conferência |
 | `pacotes` | código conferido, parada opcional e flag de excedente (único por rota) |
-| `app_config` | linha única com o mínimo/máximo de dígitos do código |
+| `pagamentos` | valor, data, competência, forma de pagamento e quem registrou |
+| `app_config` | mínimo/máximo de dígitos do código |
 
-**RLS:** cada usuário só enxerga as próprias rotas e pacotes; quem tem `tipo = 'admin'`
-enxerga tudo. As policies usam a função `is_admin()` (`security definer`, para não
-recursar em `profiles`). O painel admin não tem atalho nenhum: as ações dele passam
-pelas mesmas policies.
+**RLS:** cada usuário só enxerga o que é seu; `tipo = 'admin'` enxerga tudo, via
+`is_admin()` (`security definer`, para não recursar em `profiles`). O painel admin
+não tem atalho: as ações passam pelas mesmas policies.
 
 ## Telas
 
 | Rota | O que faz |
 |---|---|
-| `/login` | entrar e criar conta |
+| `/login` | entrar; quem não tem conta é levado ao WhatsApp |
 | `/` | rotas do dia, contadores e rotas recentes |
 | `/rotas/nova` | cria a rota com a quantidade esperada |
-| `/rotas/[id]` | conferência: bipa o código, marca excedente, finaliza e exporta (.txt / PDF) |
+| `/rotas/[id]` | conferência: bipa o código, marca excedente, finaliza, exporta |
 | `/historico` | rotas anteriores com filtro de status e resultado |
 | `/perfil` | nome, e-mail e situação da assinatura |
-| `/admin` | usuários, renovação de assinatura, rotas de todos e regras do código |
+| `/admin` | visão geral, usuários, pagamentos, rotas de todos e ajustes |
+| `/api/health` | diagnóstico de deploy: commit publicado e env vars presentes |
 
-Assinatura vencida bloqueia o acesso (admin não é bloqueado). Renovar +30 dias soma
-sobre o vencimento quando a assinatura ainda está ativa; se já venceu, recomeça de hoje.
+### Painel administrativo
 
-Remover uma conta do Auth continua sendo feito pelo painel do Supabase — o app só
-bloqueia o acesso, porque apagar usuário exige a service_role key.
+- **Visão geral** — recebido no mês, contas ativas, assinaturas vencendo em 7 dias,
+  contas sem acesso, faturamento dos últimos 6 meses e próximas renovações.
+- **Usuários** — criar conta com e-mail e senha (já confirmada), renovar +30 dias,
+  suspender, bloquear, reativar, promover a admin e excluir.
+- **Pagamentos** — registrar recebimento (com renovação opcional da assinatura),
+  histórico e totais.
+- **Ajustes** — regras de validação do código do pacote.
+
+`suspenso` e `bloqueado` cortam o acesso mas preservam os dados; só a exclusão
+apaga. Administrador nunca é barrado por assinatura, senão ninguém conseguiria
+reativar ninguém.
+
+## Performance
+
+Cada navegação chegava a abrir quatro idas em série ao Supabase. O que mudou:
+
+- O middleware lê o `exp` do JWT direto do cookie e só vai à rede quando falta
+  menos de 2 minutos para expirar ([lib/supabase/middleware.ts](lib/supabase/middleware.ts)).
+- Sessão e profile são buscados uma única vez por request, via `cache()` do React
+  ([lib/auth.ts](lib/auth.ts)) — layout, página e actions compartilham a mesma leitura.
+- Cada rota tem `loading.tsx`, então o esqueleto aparece no clique.
+- O login não carrega Framer Motion (economiza ~40 kB na primeira tela).
 
 ## Protótipos
 
-Os mockups originais continuam versionados e servidos como estáticos:
-
-- `/prototipos/rotas.html`
-- `/prototipos/conferencia.html`
+Os mockups originais continuam servidos como estáticos em `/prototipos/rotas.html`
+e `/prototipos/conferencia.html`.
 
 ## Deploy na Vercel
 
-Importe o repositório (o preset Next.js é detectado sozinho) e cadastre as duas
-variáveis `NEXT_PUBLIC_*` em **Settings → Environment Variables**. Depois adicione a
-URL do deploy em **Supabase → Authentication → URL Configuration** (Site URL e
-Redirect URLs).
+Framework Preset **Next.js** (com `Other` a Vercel publica só `public/` e o app
+não sobe). Cadastre as três variáveis em Settings → Environment Variables e
+redeploy — variável `NEXT_PUBLIC_` entra no bundle em tempo de build.

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getSessao } from "@/lib/auth";
 import { comResumo } from "@/lib/data";
 import { hoje } from "@/lib/format";
 import { Stat } from "@/components/Stat";
@@ -9,15 +9,12 @@ import type { Rota } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = (await getSessao())!;
 
   const { data: rotas } = await supabase
     .from("rotas")
     .select("*")
-    .eq("user_id", user!.id)
+    .eq("user_id", user.id)
     .order("data_rota", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(20);

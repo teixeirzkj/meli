@@ -1,50 +1,67 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getSessao } from "@/lib/auth";
 import { BottomNav } from "@/components/BottomNav";
 import { Header } from "@/components/Header";
-import { formatData, diasRestantes } from "@/lib/format";
-import type { Profile } from "@/lib/types";
 import { EnvFaltando } from "@/components/EnvFaltando";
 import { envConfigurado } from "@/lib/supabase/env";
+import { formatData, diasRestantes } from "@/lib/format";
+import { WHATSAPP_EXIBICAO, WHATSAPP_RENOVACAO } from "@/lib/contato";
 
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   if (!envConfigurado()) return <EnvFaltando />;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Checagem autoritativa da sessão: o middleware só olha o cookie, quem
+  // valida o token com o Supabase é aqui.
+  const sessao = await getSessao();
+  if (!sessao) redirect("/login");
 
-  if (!user) redirect("/login");
+  const { profile } = sessao;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single<Profile>();
-
-  // Sem profile o app não tem como aplicar assinatura nem permissões.
   if (!profile) {
     return (
-      <Aviso
+      <Bloqueio
         titulo="Conta sem perfil"
-        texto="Rode a migration 0001_init.sql no Supabase — o profile é criado por trigger no cadastro."
+        texto="Rode as migrations do Supabase — o profile é criado por trigger no cadastro."
       />
     );
   }
 
   const isAdmin = profile.tipo === "admin";
-  const vencida = !isAdmin && diasRestantes(profile.assinatura_fim) < 0;
+  const dias = diasRestantes(profile.assinatura_fim);
 
-  if (vencida) {
-    return (
-      <Aviso
-        titulo="Assinatura vencida"
-        texto={`Sua assinatura venceu em ${formatData(profile.assinatura_fim)}. Fale com o administrador para renovar.`}
-      />
-    );
+  // Admin nunca é barrado: senão ninguém consegue reativar ninguém.
+  if (!isAdmin) {
+    if (profile.status === "bloqueado") {
+      return (
+        <Bloqueio
+          titulo="Acesso bloqueado"
+          texto="Sua conta foi bloqueada pelo administrador. Fale com a gente para entender o que houve."
+          mostrarWhatsapp
+        />
+      );
+    }
+
+    if (profile.status === "suspenso") {
+      return (
+        <Bloqueio
+          titulo="Conta suspensa"
+          texto="Seu acesso está pausado no momento. A gente reativa assim que resolver a pendência."
+          mostrarWhatsapp
+        />
+      );
+    }
+
+    if (dias < 0) {
+      return (
+        <Bloqueio
+          titulo="Assinatura vencida"
+          texto={`Sua assinatura venceu em ${formatData(profile.assinatura_fim)}. Renove para voltar a conferir rotas.`}
+          mostrarWhatsapp
+        />
+      );
+    }
   }
 
   return (
@@ -56,18 +73,41 @@ export default async function AppLayout({
   );
 }
 
-function Aviso({ titulo, texto }: { titulo: string; texto: string }) {
+function Bloqueio({
+  titulo,
+  texto,
+  mostrarWhatsapp = false,
+}: {
+  titulo: string;
+  texto: string;
+  mostrarWhatsapp?: boolean;
+}) {
   return (
     <main className="flex min-h-dvh items-center justify-center px-4">
-      <div className="card w-full max-w-[380px] p-6 text-center">
+      <div className="card w-full max-w-[400px] p-6 text-center">
         <h1 className="font-display text-[20px] font-bold text-navy">{titulo}</h1>
         <p className="mt-2 text-[14px] text-muted">{texto}</p>
-        <form action="/auth/signout" method="post" className="mt-5">
+
+        {mostrarWhatsapp && (
+          <>
+            <a
+              href={WHATSAPP_RENOVACAO}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 block rounded-xl bg-yellow px-4 py-3 font-display text-[15px] font-bold text-navy-ink transition hover:bg-yellow-soft"
+            >
+              Falar no WhatsApp
+            </a>
+            <p className="mt-2 text-[12px] text-muted">{WHATSAPP_EXIBICAO}</p>
+          </>
+        )}
+
+        <form action="/auth/signout" method="post" className="mt-4">
           <button
             type="submit"
-            className="w-full rounded-xl bg-yellow px-4 py-3 font-display text-[15px] font-bold text-navy-ink"
+            className="w-full rounded-xl border border-line px-4 py-2.5 font-display text-[13.5px] font-bold text-navy"
           >
-            Voltar ao login
+            Sair da conta
           </button>
         </form>
       </div>

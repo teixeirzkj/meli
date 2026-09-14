@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getSessao } from "@/lib/auth";
 import { comResumo } from "@/lib/data";
 import { RotaCard } from "@/components/RotaCard";
 import type { Rota } from "@/lib/types";
@@ -24,15 +24,12 @@ export default async function HistoricoPage({
   searchParams: Promise<{ status?: string; resultado?: string }>;
 }) {
   const { status = "todos", resultado = "todos" } = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = (await getSessao())!;
 
   let query = supabase
     .from("rotas")
     .select("*")
-    .eq("user_id", user!.id)
+    .eq("user_id", user.id)
     .order("data_rota", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(100);
