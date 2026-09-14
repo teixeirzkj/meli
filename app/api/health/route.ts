@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { envConfigurado, variaveisFaltando } from "@/lib/supabase/env";
+import { temServiceRole } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,8 @@ export async function GET() {
     commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local",
     ambiente: process.env.VERCEL_ENV ?? "local",
     envFaltando: variaveisFaltando(),
+    // Só o fato de existir — nunca o valor.
+    podeCriarConta: temServiceRole(),
     supabaseHost: process.env.NEXT_PUBLIC_SUPABASE_URL
       ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host
       : null,
