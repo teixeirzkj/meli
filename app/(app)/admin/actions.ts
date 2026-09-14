@@ -246,18 +246,26 @@ export async function excluirPagamento(id: string): Promise<Resultado> {
 
 // ----------------------------------------------------------- configuração
 
-export async function salvarConfig(min: number, max: number): Promise<Resultado> {
+export async function salvarConfig(
+  min: number,
+  max: number,
+  diasRetencao?: number,
+): Promise<Resultado> {
   try {
     const sessao = await exigirAdmin();
 
     if (!Number.isInteger(min) || !Number.isInteger(max) || min < 1 || max < min)
       return { ok: false, erro: "Intervalo inválido: o máximo precisa ser maior ou igual ao mínimo." };
 
+    if (diasRetencao !== undefined && (!Number.isInteger(diasRetencao) || diasRetencao < 7))
+      return { ok: false, erro: "A retenção precisa ser de no mínimo 7 dias." };
+
     const { error } = await sessao.supabase
       .from("app_config")
       .update({
         codigo_min_digitos: min,
         codigo_max_digitos: max,
+        ...(diasRetencao !== undefined ? { dias_retencao_rotas: diasRetencao } : {}),
         updated_at: new Date().toISOString(),
       })
       .eq("id", true);

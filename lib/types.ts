@@ -51,7 +51,16 @@ export type AppConfig = {
   id: boolean;
   codigo_min_digitos: number;
   codigo_max_digitos: number;
+  /** Ausente enquanto a migration 0003 não roda. */
+  dias_retencao_rotas?: number;
   updated_at: string;
+};
+
+export type ManutencaoLog = {
+  id: number;
+  executado_em: string;
+  rotas_removidas: number;
+  dias_retencao: number;
 };
 
 export type RotaResumo = Rota & {

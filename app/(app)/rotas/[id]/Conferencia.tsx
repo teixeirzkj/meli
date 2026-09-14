@@ -32,6 +32,7 @@ export function Conferencia({
   const [busca, setBusca] = useState("");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [modalFinalizar, setModalFinalizar] = useState(false);
+  const [modalExcluir, setModalExcluir] = useState(false);
   const [scannerAberto, setScannerAberto] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
@@ -127,6 +128,21 @@ export function Conferencia({
       avisar({ tom: "erro", msg: "Não removeu", sub: error.message });
       return;
     }
+    router.refresh();
+  }
+
+  async function excluirRota() {
+    setSalvando(true);
+    const { error } = await supabase.from("rotas").delete().eq("id", rota.id);
+
+    if (error) {
+      setSalvando(false);
+      setModalExcluir(false);
+      return avisar({ tom: "erro", msg: "Não excluiu", sub: error.message });
+    }
+
+    // Sai antes de liberar o botão: a rota não existe mais para renderizar.
+    router.replace("/");
     router.refresh();
   }
 
@@ -312,6 +328,13 @@ export function Conferencia({
         </button>
       </div>
 
+      <button
+        onClick={() => setModalExcluir(true)}
+        className="self-start rounded-xl border border-danger-line bg-danger-bg px-3.5 py-2.5 font-display text-[13px] font-bold text-danger transition hover:bg-[#fde4e2]"
+      >
+        Excluir rota
+      </button>
+
       <section>
         <input
           value={busca}
@@ -367,6 +390,50 @@ export function Conferencia({
           window.setTimeout(() => inputRef.current?.focus(), 80);
         }}
       />
+
+      {modalExcluir && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-4 sm:items-center">
+          <div className="animate-pop-in card w-full max-w-[380px] p-5">
+            <h2 className="font-display text-[17px] font-bold text-navy">Excluir rota</h2>
+            <p className="mt-2 text-[13.5px] text-muted">
+              A rota <b className="text-navy-ink">{rota.nome}</b>
+              {resumo.conferidos > 0 && (
+                <>
+                  {" "}
+                  e os <b className="text-navy-ink">{resumo.conferidos}</b> pacotes já
+                  conferidos nela
+                </>
+              )}{" "}
+              somem para sempre. Não dá para desfazer.
+            </p>
+
+            {resumo.conferidos > 0 && (
+              <button
+                onClick={exportarTxt}
+                className="mt-3 w-full rounded-xl border border-line px-4 py-2.5 font-display text-[13px] font-bold text-navy"
+              >
+                Baixar o .txt antes
+              </button>
+            )}
+
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => setModalExcluir(false)}
+                className="flex-1 rounded-xl border border-line px-4 py-3 font-display text-[14px] font-bold text-navy"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={excluirRota}
+                disabled={salvando}
+                className="flex-1 rounded-xl border border-danger-line bg-danger-bg px-4 py-3 font-display text-[14px] font-bold text-danger disabled:opacity-60"
+              >
+                {salvando ? "Excluindo…" : "Excluir"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {modalFinalizar && (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-4 sm:items-center">

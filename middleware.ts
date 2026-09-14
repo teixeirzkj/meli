@@ -12,5 +12,5 @@ export const config = {
    * Só exclusão por prefixo: filtrar por extensão exigiria escapar o ponto,
    * e um "." solto aqui derruba rotas legítimas do matcher.
    */
-  matcher: ["/((?!_next|api/health|prototipos|favicon.ico|logo-rotas.png).*)"],
+  matcher: ["/((?!_next|api/health|api/cron|prototipos|favicon.ico|logo-rotas.png).*)"],
 };

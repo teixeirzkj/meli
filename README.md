@@ -26,6 +26,7 @@ npm run dev
 | `NEXT_PUBLIC_SUPABASE_URL` | endereço do projeto | build + navegador |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | acesso do usuário logado, sob RLS | build + navegador |
 | `SUPABASE_SERVICE_ROLE_KEY` | criar e excluir contas no Auth | **só no servidor** |
+| `CRON_SECRET` | autentica o cron da Vercel que limpa rotas antigas | **só no servidor** |
 
 A `service_role` ignora RLS: ela não tem prefixo `NEXT_PUBLIC_`, nunca entra no
 bundle e só é usada dentro de server actions, depois de confirmar que quem
@@ -38,7 +39,8 @@ Rode as migrations no Supabase (**SQL Editor → New query → colar → Run**),
 
 1. [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql) — profiles, rotas, pacotes, config, RLS
 2. [supabase/migrations/0002_pagamentos_status.sql](supabase/migrations/0002_pagamentos_status.sql) — pagamentos e situação da conta
-3. [supabase/seed.sql](supabase/seed.sql) — cria profile de quem já existia e promove o dono a admin
+3. [supabase/migrations/0003_retencao_rotas.sql](supabase/migrations/0003_retencao_rotas.sql) — expurgo automático de rotas antigas
+4. [supabase/seed.sql](supabase/seed.sql) — cria profile de quem já existia e promove o dono a admin
 
 | Tabela | O que guarda |
 |---|---|
@@ -78,6 +80,26 @@ não tem atalho: as ações passam pelas mesmas policies.
 `suspenso` e `bloqueado` cortam o acesso mas preservam os dados; só a exclusão
 apaga. Administrador nunca é barrado por assinatura, senão ninguém conseguiria
 reativar ninguém.
+
+## Limpeza automática de rotas
+
+Rota antiga é apagada sozinha, com os pacotes dela junto (`on delete cascade`).
+A janela padrão é de **60 dias contados da criação** e o administrador muda o
+número em **Admin → Ajustes**; o mínimo aceito é 7 dias.
+
+Quem executa é o próprio Postgres: a função `limpar_rotas_antigas()` roda todo
+dia às 04:00 UTC via **pg_cron** (migration 0003) e anota em `manutencao_log`
+quantas rotas saíram — só nos dias em que houve o que apagar. O painel mostra a
+data da última faxina.
+
+Como rede de segurança existe `/api/cron/limpeza`, agendada no
+[vercel.json](vercel.json) para 04:20 UTC, chamando a mesma função. Se o pg_cron
+estiver ativo ela não encontra nada; se não estiver, mantém a limpeza em dia.
+A rota exige `Authorization: Bearer $CRON_SECRET` e recusa tudo enquanto a
+variável não existir — endpoint que apaga dados não fica aberto.
+
+Exclusão manual continua disponível: **Excluir rota** na tela da rota, com
+confirmação e atalho para baixar o .txt antes.
 
 ## Leitura de código de barras
 

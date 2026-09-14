@@ -6,6 +6,7 @@ import { ultimosMeses } from "@/lib/format";
 import { AdminPanel } from "./AdminPanel";
 import type {
   AppConfig,
+  ManutencaoLog,
   MesFaturamento,
   Pagamento,
   Profile,
@@ -26,6 +27,7 @@ export default async function AdminPage() {
     { data: pagamentos, error: erroPagamentos },
     { data: rotas },
     { data: config },
+    { data: ultimaLimpeza },
   ] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase
@@ -35,6 +37,12 @@ export default async function AdminPage() {
         .limit(500),
       supabase.from("rotas").select("*").order("created_at", { ascending: false }).limit(40),
       supabase.from("app_config").select("*").eq("id", true).maybeSingle<AppConfig>(),
+      supabase
+        .from("manutencao_log")
+        .select("*")
+        .order("executado_em", { ascending: false })
+        .limit(1)
+        .maybeSingle<ManutencaoLog>(),
     ]);
 
   const listaPerfis = (perfis ?? []) as Profile[];
@@ -107,6 +115,7 @@ export default async function AdminPage() {
       // A tabela de pagamentos vem da migration 0002; sem ela o painel abre
       // igual, só sem o módulo financeiro.
       migracaoPendente={Boolean(erroPagamentos)}
+      ultimaLimpeza={ultimaLimpeza ?? null}
     />
   );
 }

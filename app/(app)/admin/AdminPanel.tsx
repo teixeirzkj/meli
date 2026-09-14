@@ -20,6 +20,7 @@ import {
 import { excluirPagamento, excluirUsuario, salvarConfig } from "./actions";
 import type {
   AppConfig,
+  ManutencaoLog,
   MesFaturamento,
   Pagamento,
   RotaResumo,
@@ -46,6 +47,7 @@ export function AdminPanel({
   meuId,
   podeCriarConta,
   migracaoPendente,
+  ultimaLimpeza,
 }: {
   usuarios: UsuarioAdmin[];
   pagamentos: Pagamento[];
@@ -55,6 +57,7 @@ export function AdminPanel({
   meuId: string;
   podeCriarConta: boolean;
   migracaoPendente: boolean;
+  ultimaLimpeza: ManutencaoLog | null;
 }) {
   const [aba, setAba] = useState<Aba>("visao");
   const [busca, setBusca] = useState("");
@@ -63,6 +66,9 @@ export function AdminPanel({
   const [excluindo, setExcluindo] = useState<UsuarioAdmin | null>(null);
   const [feedback, setFeedback] = useState<{ tom: "ok" | "erro"; msg: string } | null>(null);
   const [pendente, iniciar] = useTransition();
+
+  // A coluna só existe depois da migration 0003.
+  const temRetencao = config.dias_retencao_rotas != null;
 
   const nomePorId = useMemo(
     () => new Map(usuarios.map((u) => [u.id, u.nome || u.email])),
@@ -399,6 +405,7 @@ export function AdminPanel({
                   const r = await salvarConfig(
                     Number(formData.get("min")),
                     Number(formData.get("max")),
+                    temRetencao ? Number(formData.get("retencao")) : undefined,
                   );
                   avisar(r.ok ? "ok" : "erro", r.ok ? "Configuração salva." : r.erro!);
                 })
@@ -432,6 +439,46 @@ export function AdminPanel({
               <p className="text-[11.5px] text-muted">
                 Vale para todos os usuários na hora de bipar o pacote.
               </p>
+
+              <hr className="my-1 border-line-soft" />
+
+              <p className="text-[13px] font-semibold text-navy-ink">
+                Limpeza automática de rotas
+              </p>
+
+              {temRetencao ? (
+                <>
+                  <Campo
+                    label="Apagar rotas depois de (dias)"
+                    hint="Mínimo de 7 dias. A faxina roda todo dia de madrugada."
+                  >
+                    <input
+                      name="retencao"
+                      type="number"
+                      min={7}
+                      max={3650}
+                      defaultValue={config.dias_retencao_rotas ?? 60}
+                      className={CAMPO}
+                    />
+                  </Campo>
+
+                  <p className="rounded-lg border border-warn-line bg-warn-bg px-3 py-2 text-[11.5px] font-medium text-warn">
+                    A rota sai junto com os pacotes conferidos dela, sem como
+                    desfazer. Quem precisa do histórico deve baixar o .txt antes.
+                  </p>
+
+                  <p className="text-[11.5px] text-muted">
+                    {ultimaLimpeza
+                      ? `Última limpeza: ${formatData(ultimaLimpeza.executado_em)} — ${ultimaLimpeza.rotas_removidas} ${ultimaLimpeza.rotas_removidas === 1 ? "rota removida" : "rotas removidas"}.`
+                      : "Nenhuma limpeza registrada ainda — só aparece quando houver rota velha para apagar."}
+                  </p>
+                </>
+              ) : (
+                <Alerta tom="alerta">
+                  Rode a migration <b>0003_retencao_rotas.sql</b> no Supabase para ligar
+                  o expurgo automático.
+                </Alerta>
+              )}
 
               <Botao type="submit" disabled={pendente}>
                 {pendente ? "Salvando…" : "Salvar configuração"}
