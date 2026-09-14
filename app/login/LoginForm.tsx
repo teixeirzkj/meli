@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
 import { WHATSAPP_CONTRATACAO } from "@/lib/contato";
 
 export function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState<string | null>(null);
@@ -28,7 +27,10 @@ export function LoginForm() {
       return;
     }
 
-    router.replace(searchParams.get("next") || "/");
+    // Lido só na hora do submit: usar useSearchParams obrigaria a página a
+    // esperar hidratação para desenhar o formulário.
+    const destino = new URLSearchParams(window.location.search).get("next");
+    router.replace(destino && destino.startsWith("/") ? destino : "/");
     router.refresh();
   }
 
