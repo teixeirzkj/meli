@@ -8,6 +8,7 @@ import { formatData, resumoRota } from "@/lib/format";
 import { Stat } from "@/components/Stat";
 import { Scanner } from "@/components/Scanner";
 import { desbloquearSom, feedbackSonoro, somLigado } from "@/lib/som";
+import { ControleSom } from "@/components/ControleSom";
 import type { AppConfig, Pacote, Rota } from "@/lib/types";
 
 type Tom = "ok" | "erro" | "alerta";
@@ -275,6 +276,8 @@ export function Conferencia({
         </p>
       ) : (
         <>
+          <ControleSom />
+
           <button
             onClick={() => {
               desbloquearSom();

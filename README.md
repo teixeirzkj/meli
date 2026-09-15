@@ -170,14 +170,20 @@ conferente está olhando a etiqueta, não a tela:
 | dois toques médios | já conferido, ou excedente |
 | grave e longo | não entrou (código fora do tamanho, falha ao salvar) |
 
+Na tela da rota há o controle **🔊 Bipe ligado / 🔇 desligado** com um botão de
+**Testar** ao lado — som que falha calado é indistinguível de som quebrado, então
+o estado fica à vista em vez de escondido dentro da câmera.
+
 Vale para código lido pela câmera, digitado ou vindo de leitor USB/Bluetooth —
 os três passam pelo mesmo caminho. O botão **Bipe** na tela da câmera silencia,
 e a escolha fica guardada no aparelho.
 
 Detalhes que fazem o som funcionar no celular ([lib/som.ts](lib/som.ts)): um
 único AudioContext para a página toda (criar um por bipe estoura o limite do
-navegador e o som some no meio da conferência) e destravamento dentro de um
-gesto do usuário, já que áudio que nasce sozinho é bloqueado.
+navegador e o som some no meio da conferência), destravamento no primeiro toque
+em qualquer lugar da página — áudio que nasce sozinho é bloqueado no celular — e,
+se ainda assim o contexto estiver suspenso, um <audio> com WAV gerado na memória
+como último recurso.
 
 Formatos: Code 128, Code 39/93, Codabar, EAN-8/13, ITF, UPC-A/E, QR e Data Matrix.
 Há lanterna quando o aparelho expõe o controle, e o mesmo código lido repetidamente

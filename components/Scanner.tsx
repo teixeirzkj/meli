@@ -262,10 +262,10 @@ export function Scanner({
             aria-pressed={comSom}
             aria-label={comSom ? "Desligar o bipe" : "Ligar o bipe"}
             className={`rounded-xl px-3 py-2 text-[12.5px] font-bold transition ${
-              comSom ? "bg-white/15 text-white" : "bg-white/30 text-white/60 line-through"
+              comSom ? "bg-white/15 text-white" : "bg-warn text-white"
             }`}
           >
-            Bipe
+            {comSom ? "🔊 Bipe" : "🔇 Mudo"}
           </button>
 
           {lanterna !== null && (
