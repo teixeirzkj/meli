@@ -5,6 +5,7 @@ import type { RotaResumo } from "@/lib/types";
 export function RotaCard({ rota }: { rota: RotaResumo }) {
   const finalizada = rota.status === "finalizada";
   const completa = rota.faltantes === 0 && rota.excedentes === 0;
+  const semQuantidade = rota.qtd_esperada == null;
 
   return (
     <Link
@@ -33,7 +34,10 @@ export function RotaCard({ rota }: { rota: RotaResumo }) {
 
       <div className="mt-3 flex items-center gap-4 text-[12.5px] tabular-nums">
         <span className="text-muted">
-          Esperados <b className="text-navy-ink">{rota.qtd_esperada}</b>
+          Esperados{" "}
+          <b className="text-navy-ink">
+            {semQuantidade ? "a informar" : rota.qtd_esperada}
+          </b>
         </span>
         <span className="text-muted">
           Conferidos <b className="text-success">{rota.conferidos}</b>

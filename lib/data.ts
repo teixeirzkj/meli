@@ -14,22 +14,19 @@ export async function comResumo(
 
   const { data: pacotes } = await supabase
     .from("pacotes")
-    .select("rota_id, excedente")
+    .select("rota_id")
     .in(
       "rota_id",
       rotas.map((r) => r.id),
     );
 
-  const contagem = new Map<string, { total: number; excedentes: number }>();
+  const contagem = new Map<string, number>();
   for (const p of pacotes ?? []) {
-    const atual = contagem.get(p.rota_id) ?? { total: 0, excedentes: 0 };
-    atual.total += 1;
-    if (p.excedente) atual.excedentes += 1;
-    contagem.set(p.rota_id, atual);
+    contagem.set(p.rota_id, (contagem.get(p.rota_id) ?? 0) + 1);
   }
 
-  return rotas.map((rota) => {
-    const c = contagem.get(rota.id) ?? { total: 0, excedentes: 0 };
-    return { ...rota, ...resumoRota(rota.qtd_esperada, c.total, c.excedentes) };
-  });
+  return rotas.map((rota) => ({
+    ...rota,
+    ...resumoRota(rota.qtd_esperada, contagem.get(rota.id) ?? 0),
+  }));
 }

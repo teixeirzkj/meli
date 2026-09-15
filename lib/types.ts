@@ -18,7 +18,8 @@ export type Rota = {
   id: string;
   user_id: string;
   nome: string;
-  qtd_esperada: number;
+  /** Só existe depois da conferência: é informada ao finalizar a rota. */
+  qtd_esperada: number | null;
   data_rota: string;
   status: RotaStatus;
   finalizada_em: string | null;

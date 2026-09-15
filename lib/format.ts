@@ -64,12 +64,18 @@ export function moedaCurta(valor: number): string {
   });
 }
 
-export function resumoRota(qtdEsperada: number, conferidos: number, excedentes: number) {
-  const validos = conferidos - excedentes;
+/**
+ * Enquanto a quantidade esperada não é informada não existe falta nem
+ * excedente — só o que foi conferido. Os dois aparecem quando a rota é
+ * finalizada e o número é declarado.
+ */
+export function resumoRota(qtdEsperada: number | null, conferidos: number) {
+  if (qtdEsperada == null) return { conferidos, faltantes: 0, excedentes: 0 };
+
   return {
     conferidos,
-    excedentes,
-    faltantes: Math.max(0, qtdEsperada - validos),
+    faltantes: Math.max(0, qtdEsperada - conferidos),
+    excedentes: Math.max(0, conferidos - qtdEsperada),
   };
 }
 

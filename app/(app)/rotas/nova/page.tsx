@@ -15,10 +15,9 @@ export default async function NovaRotaPage({
     "use server";
 
     const nome = String(formData.get("nome") ?? "").trim();
-    const qtd = Number(formData.get("qtd_esperada"));
     const data = String(formData.get("data_rota") ?? "");
 
-    if (!nome || !Number.isInteger(qtd) || qtd < 1 || !data) {
+    if (!nome || !data) {
       redirect("/rotas/nova?erro=Preencha+todos+os+campos+corretamente.");
     }
 
@@ -27,14 +26,20 @@ export default async function NovaRotaPage({
 
     const { data: rota, error } = await sessao.supabase
       .from("rotas")
-      .insert({ user_id: sessao.userId, nome, qtd_esperada: qtd, data_rota: data })
+      // Sem quantidade: ela é declarada ao finalizar, depois de conferir.
+      .insert({ user_id: sessao.userId, nome, data_rota: data })
       .select("id")
       .single();
 
     if (error || !rota) {
-      redirect(
-        `/rotas/nova?erro=${encodeURIComponent(error?.message ?? "Erro ao criar a rota.")}`,
-      );
+      // 23502 = not-null violation. Enquanto a migration 0004 não roda, o banco
+      // ainda exige a quantidade que esta tela deixou de pedir.
+      const mensagem =
+        error?.code === "23502" && error.message.includes("qtd_esperada")
+          ? "O banco ainda exige a quantidade na criação. Rode a migration 0004_quantidade_no_fim.sql no Supabase."
+          : (error?.message ?? "Erro ao criar a rota.");
+
+      redirect(`/rotas/nova?erro=${encodeURIComponent(mensagem)}`);
     }
 
     redirect(`/rotas/${rota.id}`);
@@ -62,19 +67,6 @@ export default async function NovaRotaPage({
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-[13px] font-semibold text-navy-ink">Quantidade esperada</span>
-          <input
-            name="qtd_esperada"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            required
-            placeholder="Ex.: 120"
-            className="rounded-xl border border-line bg-surface-alt px-3.5 py-3 text-[15px] tabular-nums outline-none focus:border-navy"
-          />
-        </label>
-
-        <label className="flex flex-col gap-1.5">
           <span className="text-[13px] font-semibold text-navy-ink">Data da rota</span>
           <input
             name="data_rota"
@@ -90,6 +82,11 @@ export default async function NovaRotaPage({
             {erro}
           </p>
         )}
+
+        <p className="rounded-lg border border-line bg-surface-alt px-3 py-2.5 text-[12px] leading-relaxed text-muted">
+          A quantidade esperada é informada no fim, quando você terminar de bipar —
+          é aí que dá para saber se faltou ou sobrou pacote.
+        </p>
 
         <BotaoSubmit pendenteLabel="Criando rota…">Criar rota</BotaoSubmit>
       </form>

@@ -7,14 +7,41 @@ import { createClient } from "@/lib/supabase/client";
 import { formatData, resumoRota } from "@/lib/format";
 import { Stat } from "@/components/Stat";
 import { Scanner } from "@/components/Scanner";
-import { desbloquearSom, feedbackSonoro, somLigado } from "@/lib/som";
 import { ControleSom } from "@/components/ControleSom";
+import { desbloquearSom, feedbackSonoro, somLigado } from "@/lib/som";
 import type { AppConfig, Pacote, Rota } from "@/lib/types";
 
 type Tom = "ok" | "erro" | "alerta";
 /** registrado: o pacote entrou mesmo no banco (não é repetido nem recusado). */
 type Resultado = { tom: Tom; msg: string; registrado: boolean };
 type Feedback = { tom: Tom; msg: string; sub?: string };
+
+/**
+ * Ordena pela parada, em ordem de entrega. Parada costuma ser número, mas o
+ * campo é livre: o que não for número vai para o fim, em ordem alfabética, e
+ * pacote sem parada fica por último.
+ */
+function porParada(a: Pacote, b: Pacote): number {
+  const valor = (p: Pacote) => {
+    const bruto = p.parada?.trim();
+    if (!bruto) return { grupo: 2, num: 0, texto: "" };
+
+    const num = Number(bruto.replace(",", "."));
+    return Number.isFinite(num)
+      ? { grupo: 0, num, texto: bruto }
+      : { grupo: 1, num: 0, texto: bruto.toLowerCase() };
+  };
+
+  const x = valor(a);
+  const y = valor(b);
+
+  if (x.grupo !== y.grupo) return x.grupo - y.grupo;
+  if (x.grupo === 0 && x.num !== y.num) return x.num - y.num;
+  if (x.texto !== y.texto) return x.texto.localeCompare(y.texto, "pt-BR");
+
+  // Mesma parada: mantém a ordem em que foram bipados.
+  return a.created_at.localeCompare(b.created_at);
+}
 
 export function Conferencia({
   rota: rotaInicial,
@@ -39,6 +66,7 @@ export function Conferencia({
   const [modalExcluir, setModalExcluir] = useState(false);
   const [scannerAberto, setScannerAberto] = useState(false);
   const [destacarParada, setDestacarParada] = useState(false);
+  const [esperadoDigitado, setEsperadoDigitado] = useState("");
   const [salvando, setSalvando] = useState(false);
 
   // Lê a preferência de som guardada no aparelho.
@@ -47,19 +75,26 @@ export function Conferencia({
   }, []);
 
   const finalizada = rota.status === "finalizada";
-  const excedentes = pacotes.filter((p) => p.excedente).length;
-  const resumo = resumoRota(rota.qtd_esperada, pacotes.length, excedentes);
+  const resumo = resumoRota(rota.qtd_esperada, pacotes.length);
 
+  // A lista fica na ordem de entrega e se reorganiza a cada pacote bipado.
+  const ordenados = useMemo(() => [...pacotes].sort(porParada), [pacotes]);
   const visiveis = busca.trim()
-    ? pacotes.filter((p) => p.codigo.toLowerCase().includes(busca.trim().toLowerCase()))
-    : pacotes;
+    ? ordenados.filter((p) => p.codigo.toLowerCase().includes(busca.trim().toLowerCase()))
+    : ordenados;
+
+  const paradas = useMemo(
+    () => new Set(pacotes.map((p) => p.parada?.trim()).filter(Boolean)).size,
+    [pacotes],
+  );
 
   /**
    * Um caminho só para o código, venha do teclado ou da câmera. Devolve o
    * resultado para o scanner mostrar sem precisar fechar.
    */
   async function registrar(valor: string): Promise<Resultado> {
-    if (finalizada) return devolver(valor, { tom: "erro", msg: "rota finalizada", registrado: false });
+    if (finalizada)
+      return devolver(valor, { tom: "erro", msg: "rota finalizada", registrado: false });
 
     const { codigo_min_digitos: min, codigo_max_digitos: max } = config;
 
@@ -75,9 +110,6 @@ export function Conferencia({
       return devolver(valor, { tom: "alerta", msg: "já conferido", registrado: false });
     }
 
-    // Passou da quantidade esperada: entra como excedente, não some do relatório.
-    const isExcedente = pacotes.length - excedentes >= rota.qtd_esperada;
-
     const { data, error } = await supabase
       .from("pacotes")
       .insert({
@@ -85,7 +117,6 @@ export function Conferencia({
         user_id: rota.user_id,
         codigo: valor,
         parada: parada.trim() || null,
-        excedente: isExcedente,
       })
       .select("*")
       .single<Pacote>();
@@ -101,11 +132,7 @@ export function Conferencia({
     setPacotes((atual) => [data, ...atual]);
     router.refresh();
 
-    return devolver(valor, {
-      tom: isExcedente ? "alerta" : "ok",
-      msg: isExcedente ? "excedente" : "conferido",
-      registrado: true,
-    });
+    return devolver(valor, { tom: "ok", msg: "conferido", registrado: true });
   }
 
   /**
@@ -176,11 +203,21 @@ export function Conferencia({
     router.refresh();
   }
 
+  /** Fecha a rota declarando quantos pacotes ela deveria ter. */
   async function finalizar() {
+    const esperado = Number(esperadoDigitado);
+    if (!Number.isInteger(esperado) || esperado < 0) {
+      return avisar({ tom: "erro", msg: "Informe um número válido de pacotes." });
+    }
+
     setSalvando(true);
     const { data, error } = await supabase
       .from("rotas")
-      .update({ status: "finalizada", finalizada_em: new Date().toISOString() })
+      .update({
+        qtd_esperada: esperado,
+        status: "finalizada",
+        finalizada_em: new Date().toISOString(),
+      })
       .eq("id", rota.id)
       .select("*")
       .single<Rota>();
@@ -190,13 +227,29 @@ export function Conferencia({
     if (error || !data) {
       return avisar({ tom: "erro", msg: "Não finalizou", sub: error?.message });
     }
+
+    const fechamento = resumoRota(esperado, pacotes.length);
     setRota(data);
     router.refresh();
+
+    feedbackSonoro(
+      fechamento.faltantes === 0 && fechamento.excedentes === 0 ? "ok" : "alerta",
+    );
+    avisar({
+      tom: fechamento.faltantes === 0 && fechamento.excedentes === 0 ? "ok" : "alerta",
+      msg: "Rota finalizada",
+      sub:
+        fechamento.faltantes > 0
+          ? `${fechamento.faltantes} faltando`
+          : fechamento.excedentes > 0
+            ? `${fechamento.excedentes} a mais que o esperado`
+            : "tudo conferido",
+    });
   }
 
   function avisar(fb: Feedback) {
     setFeedback(fb);
-    window.setTimeout(() => setFeedback(null), 2600);
+    window.setTimeout(() => setFeedback(null), 3200);
   }
 
   function exportarTxt() {
@@ -204,13 +257,13 @@ export function Conferencia({
       `ROTA ${rota.nome}`,
       `Data: ${formatData(rota.data_rota)}`,
       `Status: ${finalizada ? "Finalizada" : "Em conferência"}`,
-      `Esperados: ${rota.qtd_esperada}`,
+      `Esperados: ${rota.qtd_esperada ?? "não informado"}`,
       `Conferidos: ${resumo.conferidos}`,
-      `Faltantes: ${resumo.faltantes}`,
-      `Excedentes: ${resumo.excedentes}`,
+      `Faltantes: ${rota.qtd_esperada == null ? "—" : resumo.faltantes}`,
+      `Excedentes: ${rota.qtd_esperada == null ? "—" : resumo.excedentes}`,
       "",
-      "CÓDIGO;PARADA;EXCEDENTE",
-      ...pacotes.map((p) => `${p.codigo};${p.parada ?? ""};${p.excedente ? "sim" : "nao"}`),
+      "PARADA;CÓDIGO",
+      ...ordenados.map((p) => `${p.parada ?? "—"};${p.codigo}`),
     ];
 
     const blob = new Blob([linhas.join("\n")], { type: "text/plain;charset=utf-8" });
@@ -221,6 +274,13 @@ export function Conferencia({
     link.click();
     URL.revokeObjectURL(url);
   }
+
+  // Prévia do fechamento enquanto o número é digitado no diálogo.
+  const previa = (() => {
+    const n = Number(esperadoDigitado);
+    if (!esperadoDigitado || !Number.isInteger(n) || n < 0) return null;
+    return resumoRota(n, pacotes.length);
+  })();
 
   return (
     <div className="flex flex-col gap-4">
@@ -235,20 +295,27 @@ export function Conferencia({
         </p>
       </header>
 
-      <div className="grid grid-cols-4 gap-2">
-        <Stat label="Esperados" valor={rota.qtd_esperada} />
-        <Stat label="Conferidos" valor={resumo.conferidos} tom="ok" />
-        <Stat
-          label="Faltam"
-          valor={resumo.faltantes}
-          tom={resumo.faltantes > 0 ? "erro" : "ok"}
-        />
-        <Stat
-          label="Excedentes"
-          valor={resumo.excedentes}
-          tom={resumo.excedentes > 0 ? "alerta" : "neutro"}
-        />
-      </div>
+      {rota.qtd_esperada == null ? (
+        <div className="grid grid-cols-2 gap-2">
+          <Stat label="Conferidos" valor={resumo.conferidos} tom="ok" />
+          <Stat label="Paradas" valor={paradas} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-4 gap-2">
+          <Stat label="Esperados" valor={rota.qtd_esperada} />
+          <Stat label="Conferidos" valor={resumo.conferidos} tom="ok" />
+          <Stat
+            label="Faltam"
+            valor={resumo.faltantes}
+            tom={resumo.faltantes > 0 ? "erro" : "ok"}
+          />
+          <Stat
+            label="Excedentes"
+            valor={resumo.excedentes}
+            tom={resumo.excedentes > 0 ? "alerta" : "neutro"}
+          />
+        </div>
+      )}
 
       {feedback && (
         <p
@@ -272,7 +339,11 @@ export function Conferencia({
 
       {finalizada ? (
         <p className="card bg-surface-alt px-4 py-3 text-[13.5px] font-medium text-muted">
-          Esta rota já foi finalizada.
+          {resumo.faltantes === 0 && resumo.excedentes === 0
+            ? "Rota finalizada com tudo conferido."
+            : resumo.faltantes > 0
+              ? `Rota finalizada com ${resumo.faltantes} pacote(s) faltando.`
+              : `Rota finalizada com ${resumo.excedentes} pacote(s) a mais que o esperado.`}
         </p>
       ) : (
         <>
@@ -329,11 +400,10 @@ export function Conferencia({
                 value={parada}
                 onChange={(e) => setParada(e.target.value)}
                 autoComplete="off"
+                inputMode="numeric"
                 placeholder="Ex.: 12"
                 className={`rounded-xl border bg-surface-alt px-3.5 py-3 text-[15px] outline-none transition focus:border-navy ${
-                  destacarParada
-                    ? "border-yellow ring-4 ring-yellow/35"
-                    : "border-line"
+                  destacarParada ? "border-yellow ring-4 ring-yellow/35" : "border-line"
                 }`}
               />
               {destacarParada && (
@@ -357,7 +427,10 @@ export function Conferencia({
       <div className="flex gap-2">
         {!finalizada && (
           <button
-            onClick={() => setModalFinalizar(true)}
+            onClick={() => {
+              setEsperadoDigitado(String(pacotes.length));
+              setModalFinalizar(true);
+            }}
             className="flex-1 rounded-xl border border-navy px-3 py-3 font-display text-[13.5px] font-bold text-navy transition hover:bg-white"
           >
             Finalizar rota
@@ -385,30 +458,37 @@ export function Conferencia({
       </button>
 
       <section>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-display text-[14px] font-bold text-navy">
+            Pacotes por parada
+          </h2>
+          <span className="text-[12px] text-muted">
+            {pacotes.length} {pacotes.length === 1 ? "pacote" : "pacotes"}
+          </span>
+        </div>
+
         <input
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           placeholder="Pesquisar código"
-          className="w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-[14px] outline-none focus:border-navy"
+          className="mt-2.5 w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-[14px] outline-none focus:border-navy"
         />
 
         <ul className="mt-3 flex flex-col gap-2">
-          {visiveis.map((pacote) => (
+          {visiveis.map((pacote, i) => (
             <li key={pacote.id} className="card flex items-center gap-3 px-3.5 py-2.5">
+              <span className="w-6 shrink-0 text-center font-display text-[13px] font-bold tabular-nums text-muted">
+                {i + 1}
+              </span>
+
               <div className="min-w-0 flex-1">
                 <p className="truncate font-mono text-[14px] font-medium text-navy-ink">
                   {pacote.codigo}
                 </p>
-                {pacote.parada && (
-                  <p className="text-[12px] text-muted">Parada {pacote.parada}</p>
-                )}
+                <p className="text-[12px] text-muted">
+                  {pacote.parada ? `Parada ${pacote.parada}` : "sem parada"}
+                </p>
               </div>
-
-              {pacote.excedente && (
-                <span className="rounded-md bg-warn-bg px-2 py-1 text-[10.5px] font-bold text-warn">
-                  EXCEDENTE
-                </span>
-              )}
 
               {!finalizada && (
                 <button
@@ -488,15 +568,43 @@ export function Conferencia({
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-4 sm:items-center">
           <div className="animate-pop-in card w-full max-w-[380px] p-5">
             <h2 className="font-display text-[17px] font-bold text-navy">Finalizar rota</h2>
-            <dl className="mt-3 flex flex-col gap-1.5 text-[14px]">
-              <Linha termo="Esperados" valor={rota.qtd_esperada} />
-              <Linha termo="Conferidos" valor={resumo.conferidos} />
-              <Linha termo="Faltantes" valor={resumo.faltantes} />
-              <Linha termo="Excedentes" valor={resumo.excedentes} />
-            </dl>
-            <p className="mt-3 text-[13px] text-muted">
+            <p className="mt-1.5 text-[13px] text-muted">
+              Você conferiu <b className="text-navy-ink">{pacotes.length}</b> pacotes.
+              Quantos a rota deveria ter?
+            </p>
+
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              autoFocus
+              value={esperadoDigitado}
+              onChange={(e) => setEsperadoDigitado(e.target.value)}
+              className="mt-3 w-full rounded-xl border border-line bg-surface-alt px-3.5 py-3 text-center font-display text-[22px] font-bold tabular-nums text-navy-ink outline-none focus:border-navy"
+            />
+
+            {previa && (
+              <p
+                className={`mt-3 rounded-lg px-3 py-2.5 text-center text-[13px] font-semibold ${
+                  previa.faltantes === 0 && previa.excedentes === 0
+                    ? "bg-success-bg text-success"
+                    : previa.faltantes > 0
+                      ? "bg-danger-bg text-danger"
+                      : "bg-warn-bg text-warn"
+                }`}
+              >
+                {previa.faltantes === 0 && previa.excedentes === 0
+                  ? "Bate certinho — nenhum pacote faltando."
+                  : previa.faltantes > 0
+                    ? `Vão faltar ${previa.faltantes} pacote(s).`
+                    : `Sobram ${previa.excedentes} pacote(s) além do esperado.`}
+              </p>
+            )}
+
+            <p className="mt-3 text-[12px] text-muted">
               Depois de finalizada a rota não aceita mais pacotes.
             </p>
+
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => setModalFinalizar(false)}
@@ -506,24 +614,15 @@ export function Conferencia({
               </button>
               <button
                 onClick={finalizar}
-                disabled={salvando}
+                disabled={salvando || !previa}
                 className="flex-1 rounded-xl bg-yellow px-4 py-3 font-display text-[14px] font-bold text-navy-ink disabled:opacity-60"
               >
-                Finalizar
+                {salvando ? "Finalizando…" : "Finalizar"}
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function Linha({ termo, valor }: { termo: string; valor: number }) {
-  return (
-    <div className="flex items-center justify-between">
-      <dt className="text-muted">{termo}</dt>
-      <dd className="font-display font-bold tabular-nums text-navy-ink">{valor}</dd>
     </div>
   );
 }

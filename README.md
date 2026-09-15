@@ -40,12 +40,13 @@ Rode as migrations no Supabase (**SQL Editor → New query → colar → Run**),
 1. [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql) — profiles, rotas, pacotes, config, RLS
 2. [supabase/migrations/0002_pagamentos_status.sql](supabase/migrations/0002_pagamentos_status.sql) — pagamentos e situação da conta
 3. [supabase/migrations/0003_retencao_rotas.sql](supabase/migrations/0003_retencao_rotas.sql) — expurgo automático de rotas antigas
-4. [supabase/seed.sql](supabase/seed.sql) — cria profile de quem já existia e promove o dono a admin
+4. [supabase/migrations/0004_quantidade_no_fim.sql](supabase/migrations/0004_quantidade_no_fim.sql) — quantidade esperada deixa de ser exigida na criação
+5. [supabase/seed.sql](supabase/seed.sql) — cria profile de quem já existia e promove o dono a admin
 
 | Tabela | O que guarda |
 |---|---|
 | `profiles` | nome, tipo (`user`/`admin`), status (`ativo`/`suspenso`/`bloqueado`), janela da assinatura |
-| `rotas` | nome, quantidade esperada, data e status da conferência |
+| `rotas` | nome, data, status e a quantidade esperada — declarada só ao finalizar |
 | `pacotes` | código conferido, parada opcional e flag de excedente (único por rota) |
 | `pagamentos` | valor, data, competência, forma de pagamento e quem registrou |
 | `app_config` | mínimo/máximo de dígitos do código |
@@ -60,7 +61,7 @@ não tem atalho: as ações passam pelas mesmas policies.
 |---|---|
 | `/login` | entrar; quem não tem conta é levado ao WhatsApp |
 | `/` | rotas do dia, contadores e rotas recentes |
-| `/rotas/nova` | cria a rota com a quantidade esperada |
+| `/rotas/nova` | cria a rota com nome e data |
 | `/rotas/[id]` | conferência: leitura por câmera, excedente, finalização e exportação |
 | `/historico` | rotas anteriores com filtro de status e resultado |
 | `/perfil` | nome, e-mail e situação da assinatura |
@@ -80,6 +81,18 @@ não tem atalho: as ações passam pelas mesmas policies.
 `suspenso` e `bloqueado` cortam o acesso mas preservam os dados; só a exclusão
 apaga. Administrador nunca é barrado por assinatura, senão ninguém conseguiria
 reativar ninguém.
+
+## Fluxo da conferência
+
+A rota nasce só com nome e data. A quantidade esperada é declarada **no fim**,
+ao finalizar — que é quando ela aparece na operação real: primeiro se confere o
+que veio, depois se compara com o que deveria ter vindo. Enquanto a rota está
+aberta a tela mostra conferidos e paradas; falta e excedente só existem depois
+do fechamento, calculados da diferença.
+
+A lista de pacotes fica **ordenada por parada**, em ordem de entrega, e se
+reorganiza a cada bipe. Parada não numérica vai para o fim, e pacote sem parada
+por último; empate mantém a ordem de bipagem.
 
 ## Instalar como aplicativo (PWA)
 

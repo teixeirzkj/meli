@@ -22,7 +22,8 @@ export default async function DashboardPage() {
   const lista = await comResumo(supabase, (rotas ?? []) as Rota[]);
   const doDia = lista.filter((r) => r.data_rota === hoje());
 
-  const esperados = doDia.reduce((s, r) => s + r.qtd_esperada, 0);
+  // Rota ainda em conferência não tem quantidade: só entra na soma depois.
+  const esperados = doDia.reduce((s, r) => s + (r.qtd_esperada ?? 0), 0);
   const conferidos = doDia.reduce((s, r) => s + r.conferidos, 0);
   const faltantes = doDia.reduce((s, r) => s + r.faltantes, 0);
 
