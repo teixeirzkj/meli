@@ -148,6 +148,26 @@ Dois motores, escolhidos em tempo de execução ([components/Scanner.tsx](compon
 2. **ZXing** — entra por `import()` dinâmico só quando a API nativa não existe (iPhone,
    Safari). Fica fora do carregamento inicial da página.
 
+### Bipe de confirmação
+
+Todo código registrado toca um som, com tom diferente por desfecho — o
+conferente está olhando a etiqueta, não a tela:
+
+| Som | Significa |
+|---|---|
+| um bipe agudo e curto | pacote conferido |
+| dois toques médios | já conferido, ou excedente |
+| grave e longo | não entrou (código fora do tamanho, falha ao salvar) |
+
+Vale para código lido pela câmera, digitado ou vindo de leitor USB/Bluetooth —
+os três passam pelo mesmo caminho. O botão **Bipe** na tela da câmera silencia,
+e a escolha fica guardada no aparelho.
+
+Detalhes que fazem o som funcionar no celular ([lib/som.ts](lib/som.ts)): um
+único AudioContext para a página toda (criar um por bipe estoura o limite do
+navegador e o som some no meio da conferência) e destravamento dentro de um
+gesto do usuário, já que áudio que nasce sozinho é bloqueado.
+
 Formatos: Code 128, Code 39/93, Codabar, EAN-8/13, ITF, UPC-A/E, QR e Data Matrix.
 Há lanterna quando o aparelho expõe o controle, e o mesmo código lido repetidamente
 só é aceito de novo depois de 2,5 s. A câmera exige HTTPS — em produção já é o caso.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { definirSom, desbloquearSom, somLigado } from "@/lib/som";
 
 /** Formatos que aparecem em etiqueta de pacote. */
 const FORMATOS = [
@@ -51,36 +52,7 @@ export function Scanner({
   const [motor, setMotor] = useState<"nativo" | "zxing" | null>(null);
   const [lanterna, setLanterna] = useState<boolean | null>(null);
   const [lidos, setLidos] = useState<Leitura[]>([]);
-
-  /** Bipe curto + vibração: o entregador não fica olhando a tela. */
-  const feedbackFisico = useCallback((sucesso: boolean) => {
-    try {
-      navigator.vibrate?.(sucesso ? 60 : [40, 60, 40]);
-    } catch {
-      /* sem vibração, tudo bem */
-    }
-
-    try {
-      const Ctx =
-        window.AudioContext ??
-        (window as unknown as { webkitAudioContext?: typeof AudioContext })
-          .webkitAudioContext;
-      if (!Ctx) return;
-
-      const ctx = new Ctx();
-      const osc = ctx.createOscillator();
-      const ganho = ctx.createGain();
-
-      osc.frequency.value = sucesso ? 880 : 300;
-      ganho.gain.value = 0.08;
-      osc.connect(ganho).connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.09);
-      osc.onended = () => ctx.close();
-    } catch {
-      /* áudio bloqueado, tudo bem */
-    }
-  }, []);
+  const [comSom, setComSom] = useState(true);
 
   // onCodigo é recriado a cada render do pai. Guardado em ref, tratarCodigo
   // fica estável e o efeito abaixo não reinicia a câmera a cada leitura.
@@ -102,10 +74,9 @@ export function Scanner({
       const resultado = await onCodigoRef.current(codigo);
       ocupadoRef.current = false;
 
-      feedbackFisico(resultado.tom === "ok");
       setLidos((atual) => [{ codigo, ...resultado }, ...atual].slice(0, 6));
     },
-    [feedbackFisico],
+    [],
   );
 
   useEffect(() => {
@@ -116,6 +87,8 @@ export function Scanner({
     async function iniciar() {
       setErro(null);
       setLidos([]);
+      setComSom(somLigado());
+      desbloquearSom();
 
       let stream: MediaStream;
       try {
@@ -265,6 +238,21 @@ export function Scanner({
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              const novo = !comSom;
+              definirSom(novo);
+              setComSom(novo);
+            }}
+            aria-pressed={comSom}
+            aria-label={comSom ? "Desligar o bipe" : "Ligar o bipe"}
+            className={`rounded-xl px-3 py-2 text-[12.5px] font-bold transition ${
+              comSom ? "bg-white/15 text-white" : "bg-white/30 text-white/60 line-through"
+            }`}
+          >
+            Bipe
+          </button>
+
           {lanterna !== null && (
             <button
               onClick={alternarLanterna}

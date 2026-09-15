@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatData, resumoRota } from "@/lib/format";
 import { Stat } from "@/components/Stat";
 import { Scanner } from "@/components/Scanner";
+import { desbloquearSom, feedbackSonoro, somLigado } from "@/lib/som";
 import type { AppConfig, Pacote, Rota } from "@/lib/types";
 
 type Tom = "ok" | "erro" | "alerta";
@@ -36,6 +37,11 @@ export function Conferencia({
   const [scannerAberto, setScannerAberto] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
+  // Lê a preferência de som guardada no aparelho.
+  useEffect(() => {
+    somLigado();
+  }, []);
+
   const finalizada = rota.status === "finalizada";
   const excedentes = pacotes.filter((p) => p.excedente).length;
   const resumo = resumoRota(rota.qtd_esperada, pacotes.length, excedentes);
@@ -54,6 +60,7 @@ export function Conferencia({
     const { codigo_min_digitos: min, codigo_max_digitos: max } = config;
 
     if (valor.length < min || valor.length > max) {
+      feedbackSonoro("erro");
       return {
         tom: "erro",
         msg: min === max ? `use ${min} caracteres` : `use de ${min} a ${max} caracteres`,
@@ -61,6 +68,7 @@ export function Conferencia({
     }
 
     if (pacotes.some((p) => p.codigo === valor)) {
+      feedbackSonoro("alerta");
       return { tom: "alerta", msg: "já conferido" };
     }
 
@@ -80,8 +88,13 @@ export function Conferencia({
       .single<Pacote>();
 
     if (error || !data) {
+      feedbackSonoro("erro");
       return { tom: "erro", msg: error?.message ?? "não salvou" };
     }
+
+    // O bipe é a confirmação que o conferente usa — ele está olhando a
+    // etiqueta, não a tela.
+    feedbackSonoro(isExcedente ? "alerta" : "ok");
 
     setPacotes((atual) => [data, ...atual]);
     router.refresh();
@@ -98,6 +111,7 @@ export function Conferencia({
     const valor = codigo.trim();
     if (!valor) return;
 
+    desbloquearSom();
     setSalvando(true);
     const r = await registrar(valor);
     setSalvando(false);
@@ -247,7 +261,10 @@ export function Conferencia({
       ) : (
         <>
           <button
-            onClick={() => setScannerAberto(true)}
+            onClick={() => {
+              desbloquearSom();
+              setScannerAberto(true);
+            }}
             className="flex items-center justify-center gap-2.5 rounded-xl bg-navy px-4 py-4 font-display text-[15px] font-bold text-white transition hover:bg-navy-soft"
           >
             <svg
