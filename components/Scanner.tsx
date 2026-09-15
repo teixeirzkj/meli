@@ -28,7 +28,8 @@ type ConstrutorDetector = {
   getSupportedFormats: () => Promise<string[]>;
 };
 
-type Leitura = { codigo: string; tom: "ok" | "alerta" | "erro"; msg: string };
+type Resultado = { tom: "ok" | "alerta" | "erro"; msg: string; registrado: boolean };
+type Leitura = { codigo: string } & Resultado;
 
 export function Scanner({
   aberto,
@@ -38,8 +39,8 @@ export function Scanner({
 }: {
   aberto: boolean;
   onFechar: () => void;
-  /** Devolve o que mostrar na tela do scanner para o código lido. */
-  onCodigo: (codigo: string) => Promise<{ tom: "ok" | "alerta" | "erro"; msg: string }>;
+  /** Devolve o que mostrar na tela do scanner e se o pacote foi registrado. */
+  onCodigo: (codigo: string) => Promise<Resultado>;
   onDigitar: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -59,10 +60,15 @@ export function Scanner({
   const onCodigoRef = useRef(onCodigo);
   onCodigoRef.current = onCodigo;
 
+  const onFecharRef = useRef(onFechar);
+  onFecharRef.current = onFechar;
+
+  const fechandoRef = useRef(false);
+
   const tratarCodigo = useCallback(
     async (bruto: string) => {
       const codigo = bruto.trim();
-      if (!codigo || ocupadoRef.current) return;
+      if (!codigo || ocupadoRef.current || fechandoRef.current) return;
 
       // A câmera lê o mesmo código dezenas de vezes por segundo enquanto a
       // etiqueta está no quadro: só aceita de novo depois de 2,5s.
@@ -75,6 +81,14 @@ export function Scanner({
       ocupadoRef.current = false;
 
       setLidos((atual) => [{ codigo, ...resultado }, ...atual].slice(0, 6));
+
+      // Um pacote por abertura da câmera: fechando aqui, quem confere volta a
+      // ver a parada selecionada antes do próximo bipe. Sem isso dá para
+      // emendar dezenas de pacotes na parada errada sem perceber.
+      if (resultado.registrado) {
+        fechandoRef.current = true;
+        window.setTimeout(() => onFecharRef.current(), 700);
+      }
     },
     [],
   );
@@ -87,6 +101,7 @@ export function Scanner({
     async function iniciar() {
       setErro(null);
       setLidos([]);
+      fechandoRef.current = false;
       setComSom(somLigado());
       desbloquearSom();
 
@@ -300,6 +315,11 @@ export function Scanner({
             </li>
           ))}
         </ul>
+
+        <p className="text-center text-[11.5px] text-white/60">
+          A câmera fecha sozinha a cada pacote registrado, para você conferir a parada
+          antes do próximo.
+        </p>
 
         <button
           onClick={onDigitar}

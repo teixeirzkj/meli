@@ -148,6 +148,17 @@ Dois motores, escolhidos em tempo de execução ([components/Scanner.tsx](compon
 2. **ZXing** — entra por `import()` dinâmico só quando a API nativa não existe (iPhone,
    Safari). Fica fora do carregamento inicial da página.
 
+### Um pacote por abertura
+
+A câmera fecha sozinha assim que o pacote é **registrado** e precisa ser aberta
+de novo para o próximo. É proposital: a parada fica no formulário da tela da
+rota, e leitura contínua deixava emendar dezenas de pacotes na parada errada
+sem ninguém perceber. Ao voltar, o campo da parada pisca e o botão da câmera
+mostra qual parada está selecionada.
+
+Código repetido ou recusado **não** fecha a câmera — nada entrou, então não há
+o que reconferir.
+
 ### Bipe de confirmação
 
 Todo código registrado toca um som, com tom diferente por desfecho — o

@@ -11,6 +11,8 @@ import { desbloquearSom, feedbackSonoro, somLigado } from "@/lib/som";
 import type { AppConfig, Pacote, Rota } from "@/lib/types";
 
 type Tom = "ok" | "erro" | "alerta";
+/** registrado: o pacote entrou mesmo no banco (não é repetido nem recusado). */
+type Resultado = { tom: Tom; msg: string; registrado: boolean };
 type Feedback = { tom: Tom; msg: string; sub?: string };
 
 export function Conferencia({
@@ -35,6 +37,7 @@ export function Conferencia({
   const [modalFinalizar, setModalFinalizar] = useState(false);
   const [modalExcluir, setModalExcluir] = useState(false);
   const [scannerAberto, setScannerAberto] = useState(false);
+  const [destacarParada, setDestacarParada] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
   // Lê a preferência de som guardada no aparelho.
@@ -54,22 +57,21 @@ export function Conferencia({
    * Um caminho só para o código, venha do teclado ou da câmera. Devolve o
    * resultado para o scanner mostrar sem precisar fechar.
    */
-  async function registrar(valor: string): Promise<{ tom: Tom; msg: string }> {
-    if (finalizada) return { tom: "erro", msg: "rota finalizada" };
+  async function registrar(valor: string): Promise<Resultado> {
+    if (finalizada) return devolver(valor, { tom: "erro", msg: "rota finalizada", registrado: false });
 
     const { codigo_min_digitos: min, codigo_max_digitos: max } = config;
 
     if (valor.length < min || valor.length > max) {
-      feedbackSonoro("erro");
-      return {
+      return devolver(valor, {
         tom: "erro",
         msg: min === max ? `use ${min} caracteres` : `use de ${min} a ${max} caracteres`,
-      };
+        registrado: false,
+      });
     }
 
     if (pacotes.some((p) => p.codigo === valor)) {
-      feedbackSonoro("alerta");
-      return { tom: "alerta", msg: "já conferido" };
+      return devolver(valor, { tom: "alerta", msg: "já conferido", registrado: false });
     }
 
     // Passou da quantidade esperada: entra como excedente, não some do relatório.
@@ -88,20 +90,43 @@ export function Conferencia({
       .single<Pacote>();
 
     if (error || !data) {
-      feedbackSonoro("erro");
-      return { tom: "erro", msg: error?.message ?? "não salvou" };
+      return devolver(valor, {
+        tom: "erro",
+        msg: error?.message ?? "não salvou",
+        registrado: false,
+      });
     }
-
-    // O bipe é a confirmação que o conferente usa — ele está olhando a
-    // etiqueta, não a tela.
-    feedbackSonoro(isExcedente ? "alerta" : "ok");
 
     setPacotes((atual) => [data, ...atual]);
     router.refresh();
 
-    return isExcedente
-      ? { tom: "alerta", msg: "excedente" }
-      : { tom: "ok", msg: "conferido" };
+    return devolver(valor, {
+      tom: isExcedente ? "alerta" : "ok",
+      msg: isExcedente ? "excedente" : "conferido",
+      registrado: true,
+    });
+  }
+
+  /**
+   * Ponto único de saída: toca o som e mostra o aviso na tela da rota — que é
+   * para onde a câmera volta depois de cada pacote.
+   */
+  function devolver(codigoLido: string, r: Resultado): Resultado {
+    feedbackSonoro(r.tom);
+
+    avisar({
+      tom: r.tom,
+      msg:
+        r.tom === "ok" ? "Pacote conferido" : r.tom === "alerta" ? "Atenção" : "Não registrado",
+      sub: `${codigoLido} — ${r.msg}`,
+    });
+
+    if (r.registrado) {
+      setDestacarParada(true);
+      window.setTimeout(() => setDestacarParada(false), 2600);
+    }
+
+    return r;
   }
 
   async function adicionar(e: React.FormEvent) {
@@ -116,18 +141,8 @@ export function Conferencia({
     const r = await registrar(valor);
     setSalvando(false);
 
-    if (r.tom === "ok") setCodigo("");
+    if (r.registrado) setCodigo("");
     inputRef.current?.focus();
-    avisar({
-      tom: r.tom,
-      msg:
-        r.tom === "ok"
-          ? "Pacote conferido"
-          : r.tom === "alerta"
-            ? "Atenção"
-            : "Não registrado",
-      sub: `${valor} — ${r.msg}`,
-    });
   }
 
   async function remover(pacote: Pacote) {
@@ -280,7 +295,12 @@ export function Conferencia({
               <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
               <path d="M7 8v8M10.5 8v8M14 8v8M17 8v8" />
             </svg>
-            Escanear com a câmera
+            <span className="flex flex-col items-start leading-tight">
+              Escanear com a câmera
+              <span className="text-[11.5px] font-medium text-white/70">
+                {parada.trim() ? `Parada ${parada.trim()}` : "sem parada definida"}
+              </span>
+            </span>
           </button>
 
           <form onSubmit={adicionar} className="card flex flex-col gap-3 p-4">
@@ -307,8 +327,17 @@ export function Conferencia({
                 onChange={(e) => setParada(e.target.value)}
                 autoComplete="off"
                 placeholder="Ex.: 12"
-                className="rounded-xl border border-line bg-surface-alt px-3.5 py-3 text-[15px] outline-none focus:border-navy"
+                className={`rounded-xl border bg-surface-alt px-3.5 py-3 text-[15px] outline-none transition focus:border-navy ${
+                  destacarParada
+                    ? "border-yellow ring-4 ring-yellow/35"
+                    : "border-line"
+                }`}
               />
+              {destacarParada && (
+                <span className="animate-fb-in text-[11.5px] font-semibold text-warn">
+                  Confira a parada antes do próximo pacote.
+                </span>
+              )}
             </label>
 
             <button
