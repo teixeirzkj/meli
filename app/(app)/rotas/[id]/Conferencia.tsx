@@ -55,6 +55,10 @@ export function Conferencia({
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const inputRef = useRef<HTMLInputElement>(null);
+  const paradaRef = useRef<HTMLInputElement>(null);
+  // Marca que a câmera fechou logo após registrar: ao voltar, o cursor vai
+  // para a parada, que acabou de ser zerada.
+  const pedirParadaRef = useRef(false);
 
   const [rota, setRota] = useState(rotaInicial);
   const [pacotes, setPacotes] = useState(pacotesIniciais);
@@ -150,8 +154,13 @@ export function Conferencia({
     });
 
     if (r.registrado) {
+      // Cada pacote costuma ir para uma parada diferente: deixar o número
+      // anterior no campo obriga a apagar antes de digitar o próximo, e é
+      // exatamente assim que pacote acaba gravado na parada errada.
+      setParada("");
+      pedirParadaRef.current = true;
       setDestacarParada(true);
-      window.setTimeout(() => setDestacarParada(false), 2600);
+      window.setTimeout(() => setDestacarParada(false), 3000);
     }
 
     return r;
@@ -397,6 +406,7 @@ export function Conferencia({
                 Parada (opcional)
               </span>
               <input
+                ref={paradaRef}
                 value={parada}
                 onChange={(e) => setParada(e.target.value)}
                 autoComplete="off"
@@ -408,7 +418,7 @@ export function Conferencia({
               />
               {destacarParada && (
                 <span className="animate-fb-in text-[11.5px] font-semibold text-warn">
-                  Confira a parada antes do próximo pacote.
+                  Parada zerada — informe a do próximo pacote.
                 </span>
               )}
             </label>
@@ -512,7 +522,14 @@ export function Conferencia({
 
       <Scanner
         aberto={scannerAberto}
-        onFechar={() => setScannerAberto(false)}
+        onFechar={() => {
+          setScannerAberto(false);
+
+          if (pedirParadaRef.current) {
+            pedirParadaRef.current = false;
+            window.setTimeout(() => paradaRef.current?.focus(), 120);
+          }
+        }}
         onCodigo={registrar}
         onDigitar={() => {
           setScannerAberto(false);
