@@ -99,10 +99,13 @@ por último; empate mantém a ordem de bipagem.
 O app é instalável: ícone na tela inicial, tela cheia sem barra de navegador e
 atalhos para "Nova rota" e "Histórico".
 
-- **Android/Chrome** — aparece o botão *Instalar aplicativo* em `/perfil`, ou o
-  próprio navegador oferece a instalação.
-- **iPhone/Safari** — Compartilhar → *Adicionar à Tela de Início* (o iOS não
-  expõe convite automático; `/perfil` mostra a instrução).
+- **Android/Chrome** — o cartão *Instalar na tela inicial* aparece no topo da tela
+  inicial e em `/perfil`; o botão abre a caixa nativa de instalação.
+- **iPhone/Safari** — Compartilhar → *Adicionar à Tela de Início*. O iOS não expõe
+  convite automático, então o botão vira instrução em vez de sumir.
+
+O cartão some sozinho quando o app já está rodando instalado, e não é renderizado
+no servidor: quem já instalou não vê um convite piscar a cada carregamento.
 
 Peças: [app/manifest.ts](app/manifest.ts), [public/sw.js](public/sw.js),
 [components/BotaoInstalar.tsx](components/BotaoInstalar.tsx) e os ícones em

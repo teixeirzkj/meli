@@ -4,6 +4,7 @@ import { comResumo } from "@/lib/data";
 import { hoje } from "@/lib/format";
 import { Stat } from "@/components/Stat";
 import { RotaCard } from "@/components/RotaCard";
+import { BotaoInstalar } from "@/components/BotaoInstalar";
 import type { Rota } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,10 @@ export default async function DashboardPage() {
 
   if (lista.length === 0) {
     return (
-      <div className="card mt-6 p-6 text-center">
+      <div className="flex flex-col gap-4">
+        <BotaoInstalar compacto />
+
+        <div className="card p-6 text-center">
         <h1 className="font-display text-[18px] font-bold text-navy">
           Nenhuma rota criada ainda.
         </h1>
@@ -42,12 +46,15 @@ export default async function DashboardPage() {
         >
           Criar primeira rota
         </Link>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-5">
+      <BotaoInstalar compacto />
+
       <section>
         <h1 className="font-display text-[19px] font-bold text-navy">Rotas de hoje</h1>
         <div className="mt-3 grid grid-cols-2 gap-2.5">
